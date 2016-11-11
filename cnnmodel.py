@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.cross_validation import train_test_split
 import sys
 import pickle
-np.set_printoptions(threshold=np.nan)
+import random
 
 
 def one_hot(y):
@@ -18,7 +18,8 @@ def load_obj(name):
 
 #Read the data from pickles
 pickle_file_paths = ['fold_0_data']
-pickle_file_path_prefix = '/Users/admin/Documents/pythonworkspace/data-science-practicum/final-project/gender-age-classification/data/'
+#pickle_file_path_prefix = '/Users/admin/Documents/pythonworkspace/data-science-practicum/final-project/gender-age-classification/data/'
+pickle_file_path_prefix = './'
 
 X = []
 y = []
@@ -47,13 +48,15 @@ y[y == 'f'] = 1
 X = X.astype(np.float)
 y = y.astype(np.float)
 
+print ('Data read!!')
 print X.shape
 print y.shape
 
 y = one_hot(y)
 print y.shape
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42, shuffle=True)
+print ('Train and test created!!')
 
 
 image_size = 227
@@ -122,7 +125,7 @@ fc2 = tf.nn.relu(tf.matmul(dfc1, wfc2) + bfc2)
 dfc2 = tf.nn.dropout(fc2, 0.7)
 
 
-#FC Layer 2
+#FC Layer 3
 wfc3 = tf.Variable(weight_variable([512, num_labels]))  
 bfc3 = tf.Variable(bias_variable([num_labels]))
 fc3 = (tf.matmul(dfc2, wfc3) + bfc3)
@@ -147,10 +150,26 @@ init_op = tf.initialize_all_variables()
 
 sess.run(init_op)
 
-for i in range(100001):
+for i in range(15001):
     indices = np.random.permutation(X_train.shape[0])[:batch_size]
     X_batch = X_train[indices,:,:,:]
     y_batch = y_train[indices,:]
+
+    '''
+		Additions to make:
+			1. Take a random crop of 227 * 227
+			2. Randomly mirror the image
+	'''
+	#random horizontal flipping
+    if random.random() < .5:
+    	X_batch = X_batch[:,:,::-1,:]
+        
+                
+    #random vertical flipping
+    if random.random() < .5:
+    	X_batch = X_batch[:,:,:,::-1]
+    	
+
     feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: 0.04}      
     if i >= 100001: 
         feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: 0.01}
@@ -161,7 +180,7 @@ for i in range(100001):
         print("Iteration: %i. Train loss %.5f, Minibatch accuracy: %.1f%%" % (i,l,accuracy(predictions,y_batch)))
        
 
-for i in range(100001):
+for i in range(15001):
     if (i % 50 == 0):
         for j in range(0,X_test.shape[0],batch_size):
             X_batch = X_test[j:j+batch_size,:,:,:]
