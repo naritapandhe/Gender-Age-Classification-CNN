@@ -18,8 +18,8 @@ def load_obj(name):
 
 #Read the data from pickles
 pickle_file_paths = ['fold_0_data']
-#pickle_file_path_prefix = '/Users/admin/Documents/pythonworkspace/data-science-practicum/final-project/gender-age-classification/data/'
-pickle_file_path_prefix = './'
+pickle_file_path_prefix = '/Users/admin/Documents/pythonworkspace/data-science-practicum/final-project/gender-age-classification/aligneddicts/non-frontal/'
+#pickle_file_path_prefix = './'
 
 X = []
 y = []
@@ -55,7 +55,7 @@ print y.shape
 y = one_hot(y)
 print y.shape
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42, shuffle=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42, stratify=y)
 print ('Train and test created!!')
 
 
@@ -64,6 +64,11 @@ num_channels = 3
 num_labels=2
 batch_size = 64
 patch_size = 3
+width = 256
+height = 256
+new_width = 227
+new_height = 227
+
 
 sess = tf.InteractiveSession()
 
@@ -150,28 +155,26 @@ init_op = tf.initialize_all_variables()
 
 sess.run(init_op)
 
-for i in range(15001):
+for i in range(20001):
     indices = np.random.permutation(X_train.shape[0])[:batch_size]
     X_batch = X_train[indices,:,:,:]
     y_batch = y_train[indices,:]
 
-    '''
-		Additions to make:
-			1. Take a random crop of 227 * 227
-			2. Randomly mirror the image
-	'''
-	#random horizontal flipping
+    rowseed = random.randint(0,29)
+    colseed = random.randint(0,29)
+    X_batch = X_batch[:,rowseed:rowseed+227,colseed:colseed+227,:]
+    
+    #random ud flipping
     if random.random() < .5:
-    	X_batch = X_batch[:,:,::-1,:]
-        
+        X_batch = X_batch[:,::-1,:,:]
                 
-    #random vertical flipping
+    #random lr flipping
     if random.random() < .5:
-    	X_batch = X_batch[:,:,:,::-1]
-    	
+        X_batch = X_batch[:,:,::-1,:]
+                
 
     feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: 0.04}      
-    if i >= 100001: 
+    if i >= 10001: 
         feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: 0.01}
     
     _, l, predictions = sess.run([train_step, cross_entropy, prediction], feed_dict=feed_dict)
@@ -180,13 +183,23 @@ for i in range(15001):
         print("Iteration: %i. Train loss %.5f, Minibatch accuracy: %.1f%%" % (i,l,accuracy(predictions,y_batch)))
        
 
-for i in range(15001):
+
+for i in range(20001):
     if (i % 50 == 0):
         for j in range(0,X_test.shape[0],batch_size):
             X_batch = X_test[j:j+batch_size,:,:,:]
             y_batch = y_test[j:j+batch_size,:]
+
+            #Center Crop
+            left = (width - new_width)/2
+            top = (height - new_height)/2
+            right = (width + new_width)/2
+            bottom = (height + new_height)/2
+            X_batch = X_batch[:,left:right,top:bottom,:]
+            
+            
             feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: float(0.04)}      
-            if i >= 100001: 
+            if i >= 10001: 
         		feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: float(0.01)}
 
             l, predictions = sess.run([cross_entropy, prediction], feed_dict=feed_dict)
