@@ -17,47 +17,51 @@ def load_obj(name):
 
 
 #Read the data from pickles
-pickle_file_paths = ['fold_0_data']
-pickle_file_path_prefix = '/Users/admin/Documents/pythonworkspace/data-science-practicum/final-project/gender-age-classification/aligneddicts/non-frontal/'
-#pickle_file_path_prefix = './'
+pickle_file_paths = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']
+#pickle_file_path_prefix = '/Users/admin/Documents/pythonworkspace/data-science-practicum/final-project/gender-age-classification/aligneddicts/non-frontal/'
+pickle_file_path_prefix = '/home/ubuntu/data/non-frontal/'
 
 X = []
 y = []
 for pf in pickle_file_paths:
-	pfile = load_obj(pickle_file_path_prefix+pf)
+    pfile = load_obj(pickle_file_path_prefix+pf)
 
-	#dict = {'fold_name': fold, 'images': inputimages, 'labels': genders}
-	X = pfile['images']
-	y = pfile['labels']
-	
+    #dict = {'fold_name': fold, 'images': inputimages, 'labels': genders}
+    images = (pfile['images'])
+    labels = (pfile['labels'])
+
+    images = np.array(images)
+    labels = np.array(labels)
+    
+    indices = np.where(labels =='nan')
+    images = np.delete(images,indices,axis=0)
+    labels = np.delete(labels, indices)
+
+    indices = np.where(y =='u')
+    images = np.delete(images,indices,axis=0)
+    labels = np.delete(labels, indices)
+
+    labels[labels == 'm'] = 0
+    labels[labels == 'f'] = 1
+
+    labels = one_hot(labels)
+    X.append(images)
+    y.append(labels)
+
 
 X = np.array(X)
+X = np.vstack(X)
+
 y = np.array(y)
+y = np.vstack(y)
 
-indices = np.where(y =='nan')
-X = np.delete(X,indices,axis=0)
-y = np.delete(y, indices)
-
-indices = np.where(y =='u')
-X = np.delete(X,indices,axis=0)
-y = np.delete(y, indices)
-
-y[y == 'm'] = 0
-y[y == 'f'] = 1
-
-X = X.astype(np.float)
-y = y.astype(np.float)
-
-print ('Data read!!')
+print "after read all"
 print X.shape
 print y.shape
-
-y = one_hot(y)
-print y.shape
+    
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42, stratify=y)
 print ('Train and test created!!')
-
 
 image_size = 227
 num_channels = 3
@@ -155,7 +159,7 @@ init_op = tf.initialize_all_variables()
 
 sess.run(init_op)
 
-for i in range(20001):
+for i in range(8001):
     indices = np.random.permutation(X_train.shape[0])[:batch_size]
     X_batch = X_train[indices,:,:,:]
     y_batch = y_train[indices,:]
@@ -172,11 +176,15 @@ for i in range(20001):
     if random.random() < .5:
         X_batch = X_batch[:,:,::-1,:]
                 
+    lr = 0.01    
+    feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}      
+    if i >= 4001 and i<6001: 
+        lr = lr*10
+        feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}
+    elif i >= 6001 and i<8001: 
+        lr = lr*10
+        feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}
 
-    feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: 0.04}      
-    if i >= 10001: 
-        feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: 0.01}
-    
     _, l, predictions = sess.run([train_step, cross_entropy, prediction], feed_dict=feed_dict)
 
     if (i % 50 == 0):
@@ -184,7 +192,7 @@ for i in range(20001):
        
 
 
-for i in range(20001):
+for i in range(8001):
     if (i % 50 == 0):
         for j in range(0,X_test.shape[0],batch_size):
             X_batch = X_test[j:j+batch_size,:,:,:]
@@ -197,10 +205,15 @@ for i in range(20001):
             bottom = (height + new_height)/2
             X_batch = X_batch[:,left:right,top:bottom,:]
             
-            
-            feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: float(0.04)}      
-            if i >= 10001: 
-        		feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: float(0.01)}
+            lr = 0.001    
+            feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}      
+            if i >= 4001 and i<6001: 
+                lr = lr * 10    
+                feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}
+            elif i >= 6001 and i<8001: 
+                lr = lr*10
+                feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}
+
 
             l, predictions = sess.run([cross_entropy, prediction], feed_dict=feed_dict)
             print("Iteration: %i. Test loss %.5f, Minibatch accuracy: %.1f%%" % (i,l,accuracy(predictions,y_batch)))
