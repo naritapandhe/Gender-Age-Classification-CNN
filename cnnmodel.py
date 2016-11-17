@@ -17,36 +17,67 @@ def load_obj(name):
 
 
 #Read the data from pickles
-pickle_file_paths = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']
-#pickle_file_path_prefix = '/Users/admin/Documents/pythonworkspace/data-science-practicum/final-project/gender-age-classification/aligneddicts/non-frontal/'
-pickle_file_path_prefix = '/home/ubuntu/data/non-frontal/'
+pickle_file_paths = ['fold_0_data','fold_4_data']
+#'fold_1_data','fold_2_data','fold_3_data','fold_4_data']
+pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/new_dicts/aligned/'
+#pickle_file_path_prefix = '/home/ubuntu/data/non-frontal/'
 
 X = []
 y = []
+X_test = []
+folder_names = []
+image_names = []
+face_ids = []
+
+
+
 for pf in pickle_file_paths:
     pfile = load_obj(pickle_file_path_prefix+pf)
+    images = []
+    labels = []
 
-    #dict = {'fold_name': fold, 'images': inputimages, 'labels': genders}
-    images = (pfile['images'])
-    labels = (pfile['labels'])
+    if pf == 'fold_4_data':
+        images = (pfile['images'])
+        folders_names1 = (pfile['folder_names']) 
+        images_names1 = (pfile['image_names'])
+        faces_ids1 = (pfile['image_names'])
+        
+        images = np.array(images)
+        X_test.append(images)
 
-    images = np.array(images)
-    labels = np.array(labels)
-    
-    indices = np.where(labels =='nan')
-    images = np.delete(images,indices,axis=0)
-    labels = np.delete(labels, indices)
+        folders_names1 = np.array(folders_names1)
+        folder_names.append(folders_names1)
 
-    indices = np.where(y =='u')
-    images = np.delete(images,indices,axis=0)
-    labels = np.delete(labels, indices)
+        images_names1 = np.array(images_names1)
+        image_names.append(images_names1)
 
-    labels[labels == 'm'] = 0
-    labels[labels == 'f'] = 1
+        faces_ids1 = np.array(faces_ids1) 
+        face_ids.append(faces_ids1)
 
-    labels = one_hot(labels)
-    X.append(images)
-    y.append(labels)
+
+    else:
+
+        #dict = {'fold_name': fold, 'images': inputimages, 'labels': genders}
+        images = (pfile['images'])
+        labels = (pfile['labels'])
+
+        images = np.array(images)
+        labels = np.array(labels)
+        
+        indices = np.where(labels =='nan')
+        images = np.delete(images,indices,axis=0)
+        labels = np.delete(labels, indices)
+
+        indices = np.where(y =='u')
+        images = np.delete(images,indices,axis=0)
+        labels = np.delete(labels, indices)
+
+        labels[labels == 'm'] = 0
+        labels[labels == 'f'] = 1
+
+        labels = one_hot(labels)
+        X.append(images)
+        y.append(labels)
 
 
 X = np.array(X)
@@ -55,18 +86,34 @@ X = np.vstack(X)
 y = np.array(y)
 y = np.vstack(y)
 
+
+X_test = np.array(X_test)
+X_test = np.vstack(X_test)
+
+folder_names = np.array(folder_names)
+folder_names = np.vstack(folder_names)
+
+image_names = np.array(image_names)
+image_names = np.vstack(image_names)
+
+face_ids = np.array(face_ids)
+#face_ids = np.vstack(face_ids)
+
 print "after read all"
 print X.shape
 print y.shape
+print X_test.shape
+print face_ids.shape
     
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42, stratify=y)
-print ('Train and test created!!')
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.1, random_state=42, stratify=y)
+print ('Training, Validation and Test dataset created!!')
 
+train_size = X_train.shape[0]
 image_size = 227
 num_channels = 3
 num_labels=2
-batch_size = 64
+batch_size = 128
 patch_size = 3
 width = 256
 height = 256
@@ -76,6 +123,9 @@ new_height = 227
 
 sess = tf.InteractiveSession()
 
+def data_type():
+  """Return the type of the activations, weights, and placeholder variables."""
+  return tf.float32
 
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.01)
@@ -102,27 +152,27 @@ tfy = tf.placeholder(tf.float32, shape=[None,num_labels])
 #Conv Layer 1
 w1 = tf.Variable(weight_variable([7,7,3,96]))    
 b1 = tf.Variable(bias_variable([96]))
-c1 = tf.nn.relu(conv2d(tfx,w1,stride=[1,3,3,1]) + b1)
-mxp1 = max_pool(c1,k=[1,3,3,1],stride=[1,2,2,1])
+c1 = tf.nn.relu(conv2d(tfx,w1,stride=[1,4,4,1],pad='VALID') + b1)
+mxp1 = max_pool(c1,k=[1,3,3,1],stride=[1,2,2,1],pad='VALID')
 lrn1 = tf.nn.local_response_normalization(mxp1, alpha=0.0001, beta=0.75)
 
 #Conv Layer 2
 w2 = tf.Variable(weight_variable([5,5,96,256]))    
 b2 = tf.Variable(bias_variable([256]))
-c2 = tf.nn.relu(conv2d(lrn1,w2,stride=[1,1,1,1],pad='VALID') + b2)
-mxp2 = max_pool(c2,k=[1,3,3,1],stride=[1,2,2,1])
+c2 = tf.nn.relu(conv2d(lrn1,w2,stride=[1,1,1,1],pad='SAME') + b2)
+mxp2 = max_pool(c2,k=[1,3,3,1],stride=[1,2,2,1],pad='VALID')
 lrn2 = tf.nn.local_response_normalization(mxp2, alpha=0.0001, beta=0.75)
 
 #Conv Layer 3
 w3 = tf.Variable(weight_variable([3,3,256,384]))    
 b3 = tf.Variable(bias_variable([384]))
-c3 = tf.nn.relu(conv2d(lrn2,w3,stride=[1,1,1,1],pad='VALID') + b3)
-mxp3 = max_pool(c3,k=[1,3,3,1],stride=[1,2,2,1])
+c3 = tf.nn.relu(conv2d(lrn2,w3,stride=[1,1,1,1],pad='SAME') + b3)
+mxp3 = max_pool(c3,k=[1,3,3,1],stride=[1,2,2,1],pad='VALID')
 
 #FC Layer 1
-wfc1 = tf.Variable(weight_variable([8 * 8 * 384, 512]))    
+wfc1 = tf.Variable(weight_variable([6 * 6 * 384, 512]))    
 bfc1 = tf.Variable(bias_variable([512]))
-mxp1_flat = tf.reshape(mxp3, [-1, 8 * 8 * 384])
+mxp1_flat = tf.reshape(mxp3, [-1, 6 * 6 * 384])
 fc1 = tf.nn.relu(tf.matmul(mxp1_flat, wfc1) + bfc1)
 dfc1 = tf.nn.dropout(fc1, 0.5)
 
@@ -144,13 +194,36 @@ fc3 = (tf.matmul(dfc2, wfc3) + bfc3)
 
 
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(fc3,tfy))
+
+ # L2 regularization for the fully connected parameters.
+regularizers = (  tf.nn.l2_loss(wfc3) + tf.nn.l2_loss(bfc3) +
+                  tf.nn.l2_loss(wfc2) + tf.nn.l2_loss(bfc2) +
+                  tf.nn.l2_loss(wfc1) + tf.nn.l2_loss(bfc1) +
+                  tf.nn.l2_loss(w3) + tf.nn.l2_loss(b3) +
+                  tf.nn.l2_loss(w2) + tf.nn.l2_loss(b2) +
+                  tf.nn.l2_loss(w1) + tf.nn.l2_loss(b1) 
+                )
+
+# Add the regularization term to the loss.
+cross_entropy += 5e-4 * regularizers
+
 prediction=tf.nn.softmax(fc3)
 #correct_prediction = tf.equal(tf.argmax(prediction,1), tf.argmax(tfy,1))
 #accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
 #train_step = tf.train.AdamOptimizer(0.001).minimize(cross_entropy)
-learning_rate = tf.placeholder(tf.float32, shape=[])
-train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
+#learning_rate = tf.placeholder(tf.float32, shape=[])
+batch = tf.Variable(0, dtype=data_type())
+learning_rate = tf.train.exponential_decay(
+      0.01,                # Base learning rate.
+      batch * batch_size,  # Current index into the dataset.
+      5000,                # Decay step.
+      0.5,                 # Decay rate.
+      staircase=True)
+
+# Use simple momentum for the optimization.
+train_step = tf.train.MomentumOptimizer(learning_rate,0.9).minimize(cross_entropy,global_step=batch)
+#train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
 
 
 # Add an op to initialize the variables.
@@ -159,7 +232,8 @@ init_op = tf.initialize_all_variables()
 
 sess.run(init_op)
 
-for i in range(8001):
+num_steps = 15000
+for i in range(num_steps):
     indices = np.random.permutation(X_train.shape[0])[:batch_size]
     X_batch = X_train[indices,:,:,:]
     y_batch = y_train[indices,:]
@@ -176,27 +250,18 @@ for i in range(8001):
     if random.random() < .5:
         X_batch = X_batch[:,:,::-1,:]
                 
-    lr = 0.01    
-    feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}      
-    if i >= 4001 and i<6001: 
-        lr = lr*10
-        feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}
-    elif i >= 6001 and i<8001: 
-        lr = lr*10
-        feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}
-
+    feed_dict = {tfx : X_batch, tfy : y_batch}      
     _, l, predictions = sess.run([train_step, cross_entropy, prediction], feed_dict=feed_dict)
 
     if (i % 50 == 0):
         print("Iteration: %i. Train loss %.5f, Minibatch accuracy: %.1f%%" % (i,l,accuracy(predictions,y_batch)))
-       
-
-
-for i in range(8001):
-    if (i % 50 == 0):
-        for j in range(0,X_test.shape[0],batch_size):
-            X_batch = X_test[j:j+batch_size,:,:,:]
-            y_batch = y_test[j:j+batch_size,:]
+      
+    #validation accuracy
+    if (i % 100 == 0):
+        test_accuracies = []
+        for j in range(0,X_val.shape[0],batch_size):
+            X_batch = X_val[j:j+batch_size,:,:,:]
+            y_batch = y_val[j:j+batch_size,:]
 
             #Center Crop
             left = (width - new_width)/2
@@ -205,16 +270,32 @@ for i in range(8001):
             bottom = (height + new_height)/2
             X_batch = X_batch[:,left:right,top:bottom,:]
             
-            lr = 0.001    
-            feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}      
-            if i >= 4001 and i<6001: 
-                lr = lr * 10    
-                feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}
-            elif i >= 6001 and i<8001: 
-                lr = lr*10
-                feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}
+            feed_dict = {tfx : X_batch, tfy : y_batch}   
+            predictions = sess.run(prediction, feed_dict=feed_dict)   
+            test_accuracies.append(accuracy(predictions,y_batch))
+
+        print("Iteration: %i. Validation Minibatch accuracy: %.1f%%" % (i, np.mean(test_accuracies)))
+        
+    #run model on test
+    if (i % 1000 == 0):
+        preds = []
+        for j in range(0,X_test.shape[0],batch_size):
+            X_batch = X_test[j:j+batch_size,:,:,:]
+          
+            #Center Crop
+            left = (width - new_width)/2
+            top = (height - new_height)/2
+            right = (width + new_width)/2
+            bottom = (height + new_height)/2
+            X_batch = X_batch[:,left:right,top:bottom,:]
+
+            feed_dict={tfx:X_batch}
+            p = sess.run(prediction, feed_dict=feed_dict)
+            preds.append(np.argmax(p, 1))
+
+        pred = np.concatenate(preds)
+        np.savetxt('prediction.txt',pred,fmt='%.0f')    
+    
 
 
-            l, predictions = sess.run([cross_entropy, prediction], feed_dict=feed_dict)
-            print("Iteration: %i. Test loss %.5f, Minibatch accuracy: %.1f%%" % (i,l,accuracy(predictions,y_batch)))
 
