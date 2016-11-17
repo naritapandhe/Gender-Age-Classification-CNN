@@ -17,10 +17,10 @@ def load_obj(name):
 
 
 #Read the data from pickles
-pickle_file_paths = ['fold_0_data','fold_4_data']
+pickle_file_paths = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data','fold_4_data']
 #'fold_1_data','fold_2_data','fold_3_data','fold_4_data']
-pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/new_dicts/aligned/'
-#pickle_file_path_prefix = '/home/ubuntu/data/non-frontal/'
+#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/new_dicts/aligned/'
+pickle_file_path_prefix = '/home/ubuntu/gender_age/data/'
 
 X = []
 y = []
@@ -99,21 +99,26 @@ image_names = np.vstack(image_names)
 face_ids = np.array(face_ids)
 #face_ids = np.vstack(face_ids)
 
-print "after read all"
+print "After read all, train shapes: "
 print X.shape
 print y.shape
+
+print "Test shape: "
 print X_test.shape
-print face_ids.shape
     
 
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.1, random_state=42, stratify=y)
+print ("Validation shape: ")
+print X_val.shape
+print y_val.shape
+
 print ('Training, Validation and Test dataset created!!')
 
 train_size = X_train.shape[0]
 image_size = 227
 num_channels = 3
 num_labels=2
-batch_size = 128
+batch_size = 64
 patch_size = 3
 width = 256
 height = 256
@@ -195,6 +200,7 @@ fc3 = (tf.matmul(dfc2, wfc3) + bfc3)
 
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(fc3,tfy))
 
+'''
  # L2 regularization for the fully connected parameters.
 regularizers = (  tf.nn.l2_loss(wfc3) + tf.nn.l2_loss(bfc3) +
                   tf.nn.l2_loss(wfc2) + tf.nn.l2_loss(bfc2) +
@@ -203,9 +209,10 @@ regularizers = (  tf.nn.l2_loss(wfc3) + tf.nn.l2_loss(bfc3) +
                   tf.nn.l2_loss(w2) + tf.nn.l2_loss(b2) +
                   tf.nn.l2_loss(w1) + tf.nn.l2_loss(b1) 
                 )
+'''
 
 # Add the regularization term to the loss.
-cross_entropy += 5e-4 * regularizers
+#cross_entropy += 5e-4 * regularizers
 
 prediction=tf.nn.softmax(fc3)
 #correct_prediction = tf.equal(tf.argmax(prediction,1), tf.argmax(tfy,1))
@@ -215,10 +222,10 @@ prediction=tf.nn.softmax(fc3)
 #learning_rate = tf.placeholder(tf.float32, shape=[])
 batch = tf.Variable(0, dtype=data_type())
 learning_rate = tf.train.exponential_decay(
-      0.01,                # Base learning rate.
+      0.001,                # Base learning rate.
       batch * batch_size,  # Current index into the dataset.
       5000,                # Decay step.
-      0.5,                 # Decay rate.
+      0.0005,                 # Decay rate.
       staircase=True)
 
 # Use simple momentum for the optimization.
@@ -258,7 +265,9 @@ for i in range(num_steps):
       
     #validation accuracy
     if (i % 100 == 0):
-        test_accuracies = []
+        val_accuracies = []
+        val_losses = []
+
         for j in range(0,X_val.shape[0],batch_size):
             X_batch = X_val[j:j+batch_size,:,:,:]
             y_batch = y_val[j:j+batch_size,:]
@@ -271,10 +280,11 @@ for i in range(num_steps):
             X_batch = X_batch[:,left:right,top:bottom,:]
             
             feed_dict = {tfx : X_batch, tfy : y_batch}   
-            predictions = sess.run(prediction, feed_dict=feed_dict)   
-            test_accuracies.append(accuracy(predictions,y_batch))
+            l, predictions = sess.run([cross_entropy,prediction], feed_dict=feed_dict)   
+            val_accuracies.append(accuracy(predictions,y_batch))
+            val_losses.append(l)
 
-        print("Iteration: %i. Validation Minibatch accuracy: %.1f%%" % (i, np.mean(test_accuracies)))
+        print("Iteration: %i. Val loss %.5f Validation Minibatch accuracy: %.1f%%" % (i, np.mean(val_losses), np.mean(val_accuracies)))
         
     #run model on test
     if (i % 1000 == 0):
