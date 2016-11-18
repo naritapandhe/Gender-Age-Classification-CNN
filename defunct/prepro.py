@@ -19,7 +19,8 @@ def load_obj(name):
 
 def create_train_data():
 	print ('Creating train data...')
-	fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']
+	fold_names = ['fold_3_data']
+	#,'fold_1_data','fold_2_data','fold_3_data']
 	i = 0;
 	width = 256
 	height = 256
@@ -30,6 +31,9 @@ def create_train_data():
 		df = pd.read_csv('/Volumes/Mac-B/faces-recognition/csvs/'+fold+'.csv')
 		inputimages = []
 		genders = []
+		print ("Tota no. of rows in %s" % fold)
+		print df.shape
+		'''
 		for index, row in df.iterrows():
 			yaw_angle = row['fiducial_yaw_angle']
 			gender = row['gender']
@@ -58,7 +62,8 @@ def create_train_data():
 		print ('')
 
 		dict = {'fold_name': fold, 'images': inputimages, 'labels': genders}
-		save_obj(dict,fold)
+		#save_obj(dict,fold)
+		'''
 	
 def create_test_data():
 	print ('Creating test data...')
@@ -122,6 +127,6 @@ def create_test_data():
 
 if __name__ == '__main__':
 	create_train_data()
-	create_test_data()
+	#create_test_data()
 
 
