@@ -59,7 +59,7 @@ for pf in pickle_file_paths:
 
         #dict = {'fold_name': fold, 'images': inputimages, 'labels': genders}
         images = (pfile['images'])
-        labels = (pfile['labels'])
+        labels = (pfile['genders'])
 
         images = np.array(images)
         labels = np.array(labels)
@@ -86,7 +86,6 @@ X = np.vstack(X)
 y = np.array(y)
 y = np.vstack(y)
 
-
 X_test = np.array(X_test)
 X_test = np.vstack(X_test)
 
@@ -96,21 +95,23 @@ folder_names = np.vstack(folder_names)
 image_names = np.array(image_names)
 image_names = np.vstack(image_names)
 
+face_ids = np.vstack(face_ids)
 face_ids = np.array(face_ids)
-#face_ids = np.vstack(face_ids)
 
+X_train = X
+y_train = y    
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.1, random_state=42,stratify=y)
 print "After read all, train shapes: "
-print X.shape
-print y.shape
+print X_train.shape
+print y_train.shape
+
+#print ("Validation shape: ")
+#print X_val.shape
+#print y_val.shape
 
 print "Test shape: "
 print X_test.shape
-    
 
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.1, random_state=42, stratify=y)
-print ("Validation shape: ")
-print X_val.shape
-print y_val.shape
 
 print ('Training, Validation and Test dataset created!!')
 
@@ -118,7 +119,7 @@ train_size = X_train.shape[0]
 image_size = 227
 num_channels = 3
 num_labels=2
-batch_size = 64
+batch_size = 50
 patch_size = 3
 width = 256
 height = 256
@@ -200,7 +201,6 @@ fc3 = (tf.matmul(dfc2, wfc3) + bfc3)
 
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(fc3,tfy))
 
-'''
  # L2 regularization for the fully connected parameters.
 regularizers = (  tf.nn.l2_loss(wfc3) + tf.nn.l2_loss(bfc3) +
                   tf.nn.l2_loss(wfc2) + tf.nn.l2_loss(bfc2) +
@@ -209,29 +209,30 @@ regularizers = (  tf.nn.l2_loss(wfc3) + tf.nn.l2_loss(bfc3) +
                   tf.nn.l2_loss(w2) + tf.nn.l2_loss(b2) +
                   tf.nn.l2_loss(w1) + tf.nn.l2_loss(b1) 
                 )
-'''
 
 # Add the regularization term to the loss.
-#cross_entropy += 5e-4 * regularizers
+cross_entropy += 5e-4 * regularizers
 
 prediction=tf.nn.softmax(fc3)
 #correct_prediction = tf.equal(tf.argmax(prediction,1), tf.argmax(tfy,1))
 #accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
-#train_step = tf.train.AdamOptimizer(0.001).minimize(cross_entropy)
+learning_rate = tf.placeholder(tf.float32, shape=[])
+train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
+'''
 #learning_rate = tf.placeholder(tf.float32, shape=[])
 batch = tf.Variable(0, dtype=data_type())
 learning_rate = tf.train.exponential_decay(
-      0.001,                # Base learning rate.
+      0.01,                # Base learning rate.
       batch * batch_size,  # Current index into the dataset.
       5000,                # Decay step.
-      0.0005,                 # Decay rate.
+      0.0005,              # Decay rate.
       staircase=True)
 
 # Use simple momentum for the optimization.
 train_step = tf.train.MomentumOptimizer(learning_rate,0.9).minimize(cross_entropy,global_step=batch)
 #train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
-
+'''
 
 # Add an op to initialize the variables.
 init_op = tf.initialize_all_variables()
@@ -257,7 +258,15 @@ for i in range(num_steps):
     if random.random() < .5:
         X_batch = X_batch[:,:,::-1,:]
                 
-    feed_dict = {tfx : X_batch, tfy : y_batch}      
+    lr = 0.001    
+    feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}      
+    if i >= 5001 and i<10001: 
+        lr = lr*10
+        feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}
+    elif i >= 10001 and i<15001: 
+        lr = lr*10
+        feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}   
+
     _, l, predictions = sess.run([train_step, cross_entropy, prediction], feed_dict=feed_dict)
 
     if (i % 50 == 0):
@@ -285,7 +294,7 @@ for i in range(num_steps):
             val_losses.append(l)
 
         print("Iteration: %i. Val loss %.5f Validation Minibatch accuracy: %.1f%%" % (i, np.mean(val_losses), np.mean(val_accuracies)))
-        
+    
     #run model on test
     if (i % 1000 == 0):
         preds = []
@@ -306,6 +315,5 @@ for i in range(num_steps):
         pred = np.concatenate(preds)
         np.savetxt('prediction.txt',pred,fmt='%.0f')    
     
-
 
 

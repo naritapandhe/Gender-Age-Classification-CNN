@@ -46,15 +46,15 @@ def get_age_range(age):
 
 def create_train_data():
 	print ('Creating train data...')
-	fold_names = ['fold_0_data']
-	#'fold_1_data','fold_2_data','fold_3_data']
+	fold_names = ['fold_frontal_0_data','fold_frontal_1_data','fold_frontal_2_data','fold_frontal_3_data']
+	#['fold_3_data']
 	i = 0;
 	width = 256
 	height = 256
 	new_width = 227
 	new_height = 227
 	
-	i = 0;
+	
 	for fold in fold_names:
 		df = pd.read_csv('/Volumes/Mac-B/faces-recognition/csvs/'+fold+'.csv')
 		inputimages = []
@@ -63,9 +63,11 @@ def create_train_data():
 		for index, row in df.iterrows():
 			yaw_angle = row['fiducial_yaw_angle']
 			gender = row['gender']
-			if ((yaw_angle >= -15) and (yaw_angle <= 15) and (gender!='u')):
+			age = row['age']
+					
+			if ((yaw_angle >= -15) and (yaw_angle <= 15) and (gender!='u') and (age!='None')):
 				if gender == 'f' or gender=='m':
-					age = row['age']
+					
 					folder_name = row['user_id']
 					image_name = row['original_image']
 					face_id = row['face_id']
@@ -82,23 +84,27 @@ def create_train_data():
 					image_arr = np.array(image)
 					inputimages.append(image_arr)
 					genders.append(gender)
-					ages.append[age_id]
+					ages.append(age_id)
 		
 		print('Done: {0}/{1} folds'.format(i, len(fold_names)))
+		i=i+1
 		
 
 		print (fold)            
 		print len(inputimages)            
 		print len(genders)
+		print len(ages)
 		print ('')
 
 		dict = {'fold_name': fold, 'images': inputimages, 'genders': genders, 'ages': ages}
 		save_obj(dict,fold)
+		print('Done: {%s}/{%s} fold' % (fold, fold_names))
+		
 		
 	
 def create_test_data():
 	print ('Creating test data...')
-	fold_names = ['fold_4_data']
+	fold_names = ['fold_frontal_4_data']
 	test_data = []
 	i = 0;
 	width = 256
@@ -118,13 +124,14 @@ def create_test_data():
 		for index, row in df.iterrows():
 			yaw_angle = row['fiducial_yaw_angle']
 			gender = row['gender']
-			if ((yaw_angle >= -15) and (yaw_angle <= 15) and (gender!='u')):
+			age = row['age']
+				
+			if ((yaw_angle >= -15) and (yaw_angle <= 15) and (gender!='u') and (age!='None')):
 				if gender == 'f' or gender=='m':
 					folder_name = row['user_id']
 					image_name = row['original_image']
 					face_id = row['face_id']
-					age = row['age']
-				
+					
 					image_path = '/Volumes/Mac-B/faces-recognition/aligned/'+folder_name+'/landmark_aligned_face.'+str(face_id)+'.'+image_name
 					image = Image.open(image_path)
 			
@@ -141,7 +148,7 @@ def create_test_data():
 					image_arr = np.array(image)
 					inputimages.append(image_arr)
 					genders.append(gender)
-					ages.append[age_id]
+					ages.append(age_id)
 
 					dict = {'folder_name': folder_name, 'image_name': image_name, 'face_id': face_id, 'gender': gender, 'age':age_id}
 					test_data.append(dict)
@@ -153,6 +160,7 @@ def create_test_data():
 		print (fold)            
 		print len(inputimages)            
 		print len(genders)
+		print len(ages)
 		print ('')
 
 		dict = {'fold_name': fold, 'images': inputimages, 'genders': genders,'ages':ages, 'folder_names': folder_names, 'image_names':image_names,'face_ids':face_ids}
@@ -165,6 +173,6 @@ def create_test_data():
 
 if __name__ == '__main__':
 	create_train_data()
-	#create_test_data()
+	create_test_data()
 
 
