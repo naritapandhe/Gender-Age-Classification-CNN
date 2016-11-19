@@ -6,8 +6,14 @@ import pickle
 import random
 
 
+train_mode = 'age'
+
 def one_hot(y):
-    y_ret = np.zeros((len(y), 2))
+    if train_mode == 'gender':
+        y_ret = np.zeros((len(y), 2))
+    else:
+        y_ret = np.zeros((len(y), 8))
+
     y_ret[np.arange(len(y)), y.astype(int)] = 1
     return y_ret
 
@@ -20,7 +26,7 @@ def load_obj(name):
 pickle_file_paths = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data','fold_4_data']
 #'fold_1_data','fold_2_data','fold_3_data','fold_4_data']
 #pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/new_dicts/aligned/'
-pickle_file_path_prefix = '/home/ubuntu/gender_age/data/'
+pickle_file_path_prefix = '/home/ubuntu/gender_age/female/'
 
 X = []
 y = []
@@ -38,43 +44,72 @@ for pf in pickle_file_paths:
 
     if pf == 'fold_4_data':
         images = (pfile['images'])
-        folders_names1 = (pfile['folder_names']) 
-        images_names1 = (pfile['image_names'])
-        faces_ids1 = (pfile['image_names'])
+        #folders_names1 = (pfile['folder_names']) 
+        #images_names1 = (pfile['image_names'])
+        #faces_ids1 = (pfile['face_ids'])
         
         images = np.array(images)
         X_test.append(images)
 
-        folders_names1 = np.array(folders_names1)
-        folder_names.append(folders_names1)
+        #folders_names1 = np.array(folders_names1)
+        #folder_names.append(folders_names1)
 
-        images_names1 = np.array(images_names1)
-        image_names.append(images_names1)
+        #images_names1 = np.array(images_names1)
+        #image_names.append(images_names1)
 
-        faces_ids1 = np.array(faces_ids1) 
-        face_ids.append(faces_ids1)
+        #faces_ids1 = np.array(faces_ids1) 
+        #face_ids.append(faces_ids1)
 
 
     else:
 
         #dict = {'fold_name': fold, 'images': inputimages, 'labels': genders}
         images = (pfile['images'])
-        labels = (pfile['genders'])
 
+        if train_mode == 'gender':
+            gender = (pfile['genders'])
+
+            indices = []
+            for i in range(len(gender)):
+                if ((gender[i] =='nan') or (gender[i] =='u')):
+                    indices.append(i)
+            
+            images = np.delete(images,indices,axis=0)
+            labels = np.delete(gender,indices)
+
+            for i in range(len(labels)):
+                if (labels[i] =='None'):
+                    indices.append(i)
+
+            images = np.delete(images,indices,axis=0)
+            labels = np.delete(labels, indices)
+
+        else:
+            labels = (pfile['ages']) 
+            indices = []
+            
+            '''   
+            gender = (pfile['genders'])
+
+            for i in range(len(gender)):
+                if ((gender[i] =='nan') or (gender[i] =='u')):
+                    indices.append(i)
+
+            images = np.delete(images,indices,axis=0)
+            labels = np.delete(labels, indices)
+
+            for i in range(len(labels)):
+                if (labels[i] =='None'):
+                    indices.append(i)
+
+            images = np.delete(images,indices,axis=0)
+            labels = np.delete(labels, indices)
+            '''
+        
+        
         images = np.array(images)
         labels = np.array(labels)
         
-        indices = np.where(labels =='nan')
-        images = np.delete(images,indices,axis=0)
-        labels = np.delete(labels, indices)
-
-        indices = np.where(y =='u')
-        images = np.delete(images,indices,axis=0)
-        labels = np.delete(labels, indices)
-
-        labels[labels == 'm'] = 0
-        labels[labels == 'f'] = 1
-
         labels = one_hot(labels)
         X.append(images)
         y.append(labels)
@@ -89,6 +124,7 @@ y = np.vstack(y)
 X_test = np.array(X_test)
 X_test = np.vstack(X_test)
 
+'''
 folder_names = np.array(folder_names)
 folder_names = np.vstack(folder_names)
 
@@ -97,17 +133,18 @@ image_names = np.vstack(image_names)
 
 face_ids = np.vstack(face_ids)
 face_ids = np.array(face_ids)
+'''
+print X.shape
+print y.shape
 
-X_train = X
-y_train = y    
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.1, random_state=42,stratify=y)
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.1, random_state=42)
 print "After read all, train shapes: "
 print X_train.shape
 print y_train.shape
 
-#print ("Validation shape: ")
-#print X_val.shape
-#print y_val.shape
+print ("Validation shape: ")
+print X_val.shape
+print y_val.shape
 
 print "Test shape: "
 print X_test.shape
@@ -118,7 +155,7 @@ print ('Training, Validation and Test dataset created!!')
 train_size = X_train.shape[0]
 image_size = 227
 num_channels = 3
-num_labels=2
+num_labels=8
 batch_size = 50
 patch_size = 3
 width = 256
