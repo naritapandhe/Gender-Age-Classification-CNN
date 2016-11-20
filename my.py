@@ -20,7 +20,7 @@ def load_obj(name):
 pickle_file_paths = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data','fold_4_data']
 #['fold_3_data']
 #['fold_0_data','fold_1_data','fold_2_data','fold_3_data','fold_4_data']
-pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/new_dicts/aligned/'
+pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/new_dicts/aligned/male'
 #pickle_file_path_prefix = '/home/ubuntu/gender_age/data/'
 
 X = []

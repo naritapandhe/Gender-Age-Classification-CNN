@@ -11,7 +11,7 @@ from operator import itemgetter
 
 
 def save_obj(obj,name):
-	image_path = '/Volumes/Mac-B/faces-recognition/new_dicts/aligned/'
+	image_path = '/Volumes/Mac-B/faces-recognition/new_model_dicts/alldata/'
 	with open(image_path+name + '.pkl', 'wb') as f:
 		pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
@@ -30,30 +30,13 @@ def get_age_range_id(age_tuple):
 
 	min_index = diff_tuple.index(min(diff_tuple, key=itemgetter(1)))
 	return min_index	
-'''
-def get_age_range(age):
-	age_ranges = [(0,2),(4,6),(8,13),(15,20),(25,32),(38,43),(48,53),(60,100)]
-	diff_tuple = []
 
-	for r in age_ranges:
-		x = tuple(np.subtract(r,age_tuple))
-		x = tuple(np.absolute(x))
-		diff_tuple.append(x)
 
-	min_index = diff_tuple.index(min(diff_tuple))
-	return min_index
-'''		
-
-def create_train_data():
+def create_train_data(fold_names):
 	print ('Creating train data...')
-	fold_names = ['fold_frontal_0_data','fold_frontal_1_data','fold_frontal_2_data','fold_frontal_3_data']
-	#['fold_3_data']
 	i = 0;
 	width = 256
 	height = 256
-	new_width = 227
-	new_height = 227
-	
 	
 	for fold in fold_names:
 		df = pd.read_csv('/Volumes/Mac-B/faces-recognition/csvs/'+fold+'.csv')
@@ -65,7 +48,7 @@ def create_train_data():
 			gender = row['gender']
 			age = row['age']
 					
-			if ((yaw_angle >= -15) and (yaw_angle <= 15) and (gender!='u') and (age!='None')):
+			if ((yaw_angle >= -15) and (yaw_angle <= 15) and (gender!='u') and (gender!='Nan') and (age!='None')):
 				if gender == 'f' or gender=='m':
 					
 					folder_name = row['user_id']
@@ -102,15 +85,12 @@ def create_train_data():
 		
 		
 	
-def create_test_data():
+def create_test_data(fold_names):
 	print ('Creating test data...')
-	fold_names = ['fold_frontal_4_data']
 	test_data = []
 	i = 0;
 	width = 256
 	height = 256
-	new_width = 227
-	new_height = 227
 
 	for fold in fold_names:
 		df = pd.read_csv('/Volumes/Mac-B/faces-recognition/csvs/'+fold+'.csv')
@@ -126,7 +106,7 @@ def create_test_data():
 			gender = row['gender']
 			age = row['age']
 				
-			if ((yaw_angle >= -15) and (yaw_angle <= 15) and (gender!='u') and (age!='None')):
+			if ((yaw_angle >= -15) and (yaw_angle <= 15) and (gender!='u') and (gender!='Nan') and (age!='None')):
 				if gender == 'f' or gender=='m':
 					folder_name = row['user_id']
 					image_name = row['original_image']
@@ -168,11 +148,14 @@ def create_test_data():
 
 
 	print('Writing the testing data to a file....')		
-	with open('testing_data.json', 'w') as fout:
+	with open('/Volumes/Mac-B/faces-recognition/new_model_dicts/alldata/testing_data.json', 'w') as fout:
 		json.dump(test_data, fout)	
 
 if __name__ == '__main__':
-	create_train_data()
-	create_test_data()
+	train_fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']
+	create_train_data(train_fold_names)
+	
+	test_fold_names = ['fold_4_data']
+	create_test_data(test_fold_names)
 
 
