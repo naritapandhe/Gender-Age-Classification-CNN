@@ -23,10 +23,15 @@ def get_age_range_id(age_tuple):
 	age_ranges = [(0,2),(4,6),(8,13),(15,20),(25,32),(38,43),(48,53),(60,100)]
 	diff_tuple = []
 
-	for r in age_ranges:
-		x = tuple(np.subtract(r,age_tuple))
-		x = tuple(np.absolute(x))
+	if age_tuple:
+		for r in age_ranges:
+			x = tuple(np.subtract(r,age_tuple))
+			x = tuple(np.absolute(x))
+			diff_tuple.append(x)
+	else:
+		x = (-1,0)
 		diff_tuple.append(x)
+
 
 	min_index = diff_tuple.index(min(diff_tuple, key=itemgetter(1)))
 	return min_index	
@@ -48,26 +53,27 @@ def create_train_data(fold_names):
 			gender = row['gender']
 			age = row['age']
 					
-			if ((yaw_angle >= -15) and (yaw_angle <= 15) and (gender!='u') and (gender!='Nan') and (age!='None')):
-				if gender == 'f' or gender=='m':
+			#(yaw_angle >= -45) and (yaw_angle <= 45) and 		
+			#if ((gender!='u') and (gender!='Nan')):
+				#if gender == 'f' or gender=='m':
 					
-					folder_name = row['user_id']
-					image_name = row['original_image']
-					face_id = row['face_id']
-					
-					age_tuple = make_tuple(age)
-					age_id = get_age_range_id(age_tuple)
-					
-					image_path = '/Volumes/Mac-B/faces-recognition/aligned/'+folder_name+'/landmark_aligned_face.'+str(face_id)+'.'+image_name
-					image = Image.open(image_path)
+			folder_name = row['user_id']
+			image_name = row['original_image']
+			face_id = row['face_id']
 			
-					#Resize image
-					image = image.resize((width, height), PIL.Image.ANTIALIAS)
+			age_tuple = make_tuple(age)
+			age_id = get_age_range_id(age_tuple)
+			
+			image_path = '/Volumes/Mac-B/faces-recognition/aligned/'+folder_name+'/landmark_aligned_face.'+str(face_id)+'.'+image_name
+			image = Image.open(image_path)
+	
+			#Resize image
+			image = image.resize((width, height), PIL.Image.ANTIALIAS)
 
-					image_arr = np.array(image)
-					inputimages.append(image_arr)
-					genders.append(gender)
-					ages.append(age_id)
+			image_arr = np.array(image)
+			inputimages.append(image_arr)
+			genders.append(gender)
+			ages.append(age_id)
 		
 		print('Done: {0}/{1} folds'.format(i, len(fold_names)))
 		i=i+1
@@ -106,7 +112,8 @@ def create_test_data(fold_names):
 			gender = row['gender']
 			age = row['age']
 				
-			if ((yaw_angle >= -15) and (yaw_angle <= 15) and (gender!='u') and (gender!='Nan') and (age!='None')):
+			#(yaw_angle >= -45) and (yaw_angle <= 45) and 	
+			if ((gender!='u') and (gender!='Nan')):
 				if gender == 'f' or gender=='m':
 					folder_name = row['user_id']
 					image_name = row['original_image']
@@ -155,7 +162,7 @@ if __name__ == '__main__':
 	train_fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']
 	create_train_data(train_fold_names)
 	
-	test_fold_names = ['fold_4_data']
-	create_test_data(test_fold_names)
+	#test_fold_names = ['fold_4_data']
+	#create_test_data(test_fold_names)
 
 

@@ -6,8 +6,13 @@ import pickle
 import random
 
 
+train_mode = 'age'
+
 def one_hot(y):
-    y_ret = np.zeros((len(y), 2))
+    if train_mode == 'gender':
+        y_ret = np.zeros((len(y), 2))
+    else:
+        y_ret = np.zeros((len(y), 8))  
     y_ret[np.arange(len(y)), y.astype(int)] = 1
     return y_ret
 
@@ -20,7 +25,7 @@ def load_obj(name):
 pickle_file_paths = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data','fold_4_data']
 #['fold_3_data']
 #['fold_0_data','fold_1_data','fold_2_data','fold_3_data','fold_4_data']
-pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/new_dicts/aligned/male'
+pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/dump/new_dicts2/m/'
 #pickle_file_path_prefix = '/home/ubuntu/gender_age/data/'
 
 X = []
@@ -31,7 +36,7 @@ image_names = []
 face_ids = []
 
 
-
+'''
 for pf in pickle_file_paths:
     pfile = load_obj(pickle_file_path_prefix+pf)
     images = []
@@ -82,10 +87,8 @@ for pf in pickle_file_paths:
 
         genders = one_hot(genders)
         
-        '''
             Currently, appending just the genders
             Not ages
-        '''
         X.append(images)
         y.append(genders)
 
@@ -102,12 +105,55 @@ y = np.vstack(y)
 print X.shape
 print y.shape
 
-#print X[0]
-print y[0]
+'''
+for pf in pickle_file_paths:
+    pfile = load_obj(pickle_file_path_prefix+pf)
+    images = []
+    labels = []
 
+    if pf == 'fold_4_data':
+        images = (pfile['images'])
+        
+        images = np.array(images)
+        X_test.append(images)
+
+    else:
+
+        #dict = {'fold_name': fold, 'images': inputimages, 'labels': genders}
+        images = (pfile['images'])
+
+        if train_mode == 'age':
+            labels = (pfile['ages'])
+
+            
+        images = np.array(images)
+        labels = np.array(labels)
+
+        labels = one_hot(labels)
+        X.append(images)
+        y.append(labels)
+
+
+X = np.array(X)
+X = np.vstack(X)
+
+y = np.array(y)
+y = np.vstack(y)
+
+X_test = np.array(X_test)
+X_test = np.vstack(X_test)
+
+print "Before starting..."
+print X.shape
+print y.shape
+
+#print X[0]
+#print y[0]
+
+'''
 if X_test:
     print "In X_test"
     X_test = np.array(X_test)
     X_test = np.vstack(X_test)
     print X_test.shape    
-
+'''
