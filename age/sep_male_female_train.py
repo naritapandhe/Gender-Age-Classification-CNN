@@ -31,7 +31,7 @@ def get_age_range_id(age_tuple):
 	min_index = diff_tuple.index(min(diff_tuple, key=itemgetter(1)))
 	return min_index	
 
-def read_fold(fold_csv_prefix,fold_image_prefix,fold_names):
+def read_fold_gender_wise(fold_csv_prefix,fold_image_prefix,fold_names):
 	width = 256
 	height = 256
 	i=0
@@ -39,9 +39,13 @@ def read_fold(fold_csv_prefix,fold_image_prefix,fold_names):
 	for fold in fold_names:
 		print("Reading fold: %s" % fold)
 		df = pd.read_csv(fold_csv_prefix+fold+'.csv')
-		inputimages = []
-		genders = []
-		ages = []
+		maleinputimages = []
+		malegenders = []
+		maleages = []
+
+		femaleinputimages = []
+		femalegenders = []
+		femaleages = []
 
 		
 		for index, row in df.iterrows():
@@ -66,90 +70,99 @@ def read_fold(fold_csv_prefix,fold_image_prefix,fold_names):
 
 					if(gender == 'm'):
 						g=0
+						maleinputimages.append(image_arr)
+						malegenders.append(g)
+						maleages.append(age_id)
 					else:
 						g=1
+						femaleinputimages.append(image_arr)
+						femalegenders.append(g)
+						femaleages.append(age_id)
 					
-					inputimages.append(image_arr)
-					genders.append(g)
-					ages.append(age_id)
+					
 		
 		print('Done: {0}/{1} folds'.format(i, len(fold_names)))
 		i=i+1
 
 		print ('Fold Name: %s' % fold)            
-		print ('Images: %i, Gender: %i, Ages: %i' % (len(inputimages), len(genders), len(ages)))            
+		print ('Male Images: %i, Male Gender: %i, Male Ages: %i' % (len(maleinputimages), len(malegenders), len(maleages)))
+		print ('Female Images: %i, Female Gender: %i, Female Ages: %i' % (len(femaleinputimages), len(femalegenders), len(femaleages)))            
 		print ('')
 
-		currDict = {'fold_name': fold, 'images': inputimages, 'genders': genders, 'ages': ages}
-		save_pickle(currDict,fold, '/Volumes/Mac-B/faces-recognition/gender_neutral_data/')
+		currDict = {'fold_name': fold, 'images': maleinputimages, 'genders': malegenders, 'ages': maleages}
+		save_pickle(currDict,'male_'+fold, '/Volumes/Mac-B/faces-recognition/gender_based_data/')
+
+		currDict = {'fold_name': fold, 'images': femaleinputimages, 'genders': femalegenders, 'ages': femaleages}
+		save_pickle(currDict,'female_'+fold, '/Volumes/Mac-B/faces-recognition/gender_based_data/')
 
 
 def create_crossval_data(fold_names):
 
 	total_files = len(fold_names)
+	genders = ['male','female']
 	cv_train = []
 	cv_val=[]
 
-	for i in range(total_files):
+	for gender in genders:
+		prefix_fold_name=gender+'_'
+		for i in range(total_files):
+			intermediate = []
+			if(i == 0):
+				j = i+3
+			else:	 
+				j = (i+3)%total_files
+			
+			k = (i+2)%total_files
+			if k < i:
+				for ii in range(i,total_files):
+					intermediate.append(fold_names[ii])
+
+				for ii in range(k):
+					intermediate.append(fold_names[ii])	
+				intermediate.append(fold_names[k])	
+			else:	
+				for ii in range(i,k+1):
+					intermediate.append(fold_names[ii])
+
+			'''
+			Over here we have all the names of files which should go in train 
+			and validation set respectively.
+			So, read those files and create the train and validation pickles
+			Call the pickle files as: 
+				gender_neutral_cv0, gender_neutral_cv1, gender_neutral_cv2, gender_neutral_cv3
+			'''		
+			cv_train.append(intermediate)
+			cv_val.append(fold_names[j])
 		
-		intermediate = []
-		if(i == 0):
-			j = i+3
-		else:	 
-			j = (i+3)%total_files
+		pprint(cv_train)
+		pprint(cv_val)	
 		
-		k = (i+2)%total_files
-		if k < i:
-			for ii in range(i,total_files):
-				intermediate.append(fold_names[ii])
+		for i in range(len(cv_train)):
+			train_files = cv_train[i]
+			train_data = []
+			val_data = []
 
-			for ii in range(k):
-				intermediate.append(fold_names[ii])	
-			intermediate.append(fold_names[k])	
-		else:	
-			for ii in range(i,k+1):
-				intermediate.append(fold_names[ii])
+			for ii in range(len(train_files)):
+				train_file_data = load_pickle('/Volumes/Mac-B/faces-recognition/gender_based_data/',prefix_fold_name+train_files[ii])
+				train_data.append(train_file_data)
 
-		'''
-		Over here we have all the names of files which should go in train 
-		and validation set respectively.
-		So, read those files and create the train and validation pickles
-		Call the pickle files as: 
-			gender_neutral_cv0, gender_neutral_cv1, gender_neutral_cv2, gender_neutral_cv3
-		'''		
-		cv_train.append(intermediate)
-		cv_val.append(fold_names[j])
-	
-	pprint(cv_train)
-	pprint(cv_val)	
-	
-	for i in range(len(cv_train)):
-		train_files = cv_train[i]
-		train_data = []
-		val_data = []
+			val_data = load_pickle('/Volumes/Mac-B/faces-recognition/gender_based_data/',prefix_fold_name+cv_val[i])	
+			print (cv_val[i])
+			print len(val_data)
 
-		#for ii in range(len(train_files)):
-			#train_file_data = load_pickle('/Volumes/Mac-B/faces-recognition/gender_neutral_data/',train_files[ii])
-			#train_data.append(train_file_data)
+			save_pickle(train_data,gender+'_cv_train_'+str(i), '/Volumes/Mac-B/faces-recognition/gender_based_data/')
+			save_pickle(val_data,gender+'_cv_val_'+str(i), '/Volumes/Mac-B/faces-recognition/gender_based_data/')
 
-		val_data = load_pickle('/Volumes/Mac-B/faces-recognition/gender_neutral_data/',cv_val[i])	
-		print (cv_val[i])
-		print len(val_data)
-
-		#save_pickle(train_data,'gender_neutral_cv_train_'+str(i), '/Volumes/Mac-B/faces-recognition/gender_neutral_data/')
-		#save_pickle(val_data,'gender_neutral_cv_val_'+str(i), '/Volumes/Mac-B/faces-recognition/gender_neutral_data/')
-
-		print("Train and val created for fold: %i" % i)
+			print("Train and val created for fold: %i" % i)
 	
 	
 def main():
-	'''
 	fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data','fold_4_data']	
-	read_fold('/Volumes/Mac-B/faces-recognition/csvs/','/Volumes/Mac-B/faces-recognition/aligned/',fold_names)
-	'''
+	read_fold_gender_wise('/Volumes/Mac-B/faces-recognition/csvs/','/Volumes/Mac-B/faces-recognition/aligned/',fold_names)
 	
-	fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']	
-	create_crossval_data(fold_names)
+	
+	#fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']	
+	#create_crossval_data(fold_names)
 
 if __name__ == "__main__":
 	main()
