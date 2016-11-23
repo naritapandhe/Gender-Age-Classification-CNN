@@ -128,7 +128,7 @@ def main():
 		y_true.append(gt_ages[i])
 		y_pred.append(predictions[i])
 
-		
+	print("#GT: %i, PT: %i" %(len(y_true), len(y_pred)))		
 
 	male_count = 0			
 	male_exact_match = 0
@@ -170,10 +170,11 @@ def main():
 	print('#Females: %i, Exact: %f, One-Off:: %f' % (female_count,((float(female_exact_match/female_count))*100),((float(female_one_off_count/female_count))*100)))		
 
 	# Plot non-normalized confusion matrix
-	cnf_matrix = confusion_matrix(y_true, y_pred,labels=[0,1])	 
+	classes = [0,1,2,3,4,5,6,7]
+	cnf_matrix = confusion_matrix(y_true, y_pred,labels=classes)	 
 	print cnf_matrix  
 	plt.figure()
-	plot_confusion_matrix(cnf_matrix, classes=['m','f'],title='Confusion matrix, without normalization')
+	plot_confusion_matrix(cnf_matrix, classes=classes,title='Confusion matrix, without normalization')
 	plt.show()
 	
 

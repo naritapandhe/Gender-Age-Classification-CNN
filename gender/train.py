@@ -4,7 +4,7 @@ import sys
 import pickle
 import random
 
-train_mode = 'age'
+train_mode = 'gender'
 
 def load_train_file(name):
 	with open(name + '.pkl', 'rb') as f:
@@ -42,10 +42,10 @@ def train():
 		val_file = load_val_file(pickle_file_path_prefix+'gender_neutral_cv_val_'+fold)
 		
 		train_images = []
-		train_ages = []
+		train_genders = []
 
 		val_images = []
-		val_ages = []
+		val_genders = []
 
 
 		'''
@@ -55,35 +55,35 @@ def train():
 		for i in range(len(train_file)):
 			current_file = train_file[i]
 			imgs = np.array(current_file['images'])
-			ages = np.array(current_file['ages'])
-			one_hot1 = one_hot(ages)
+			genders = np.array(current_file['genders'])
+			one_hot1 = one_hot(genders)
 			train_images.append(imgs)
-			train_ages.append(one_hot1)
+			train_genders.append(one_hot1)
 
 
 		val_images = np.array(val_file['images'])
-		val_ages = np.array(val_file['ages'])
-		val_ages = one_hot(val_ages)
+		val_genders = np.array(val_file['genders'])
+		val_genders = one_hot(val_genders)
 
 		train_images = np.array(train_images)
 		train_images = np.vstack(train_images)
 		
-		train_ages = np.array(train_ages)
-		train_ages = np.vstack(train_ages)
+		train_genders = np.array(train_genders)
+		train_genders = np.vstack(train_genders)
 		
 		print ("Train+Val Details for fold: %s" % fold)
 		print train_images.shape
-		print train_ages.shape
+		print train_genders.shape
 
 		print val_images.shape
-		print val_ages.shape
+		print val_genders.shape
 		print(' ')
 
 		X_train = train_images
-		y_train = train_ages
+		y_train = train_genders
 
 		X_val = val_images
-		y_val = val_ages
+		y_val = val_genders
 
 		print ('Training, Validation done for fold: %s\n' % fold)
 		image_size = 227
@@ -93,7 +93,7 @@ def train():
 		height = 256
 		new_width = 227
 		new_height = 227
-		num_labels = 8
+		num_labels = 2
 
 
 		sess = tf.InteractiveSession()
@@ -259,13 +259,13 @@ def train():
 				'''
 				if mean_loss < past_loss:
 					past_loss = mean_loss
-					save_path = saver.save(sess, "/home/ubuntu/gender_age/gender_neutral/saved_model/model.ckpt")
+					save_path = saver.save(sess, "/home/ubuntu/gender_age/gender/saved_model/model.ckpt")
 					print("Model saved in file: %s" % save_path)
 
 				'''	
 				if acc > past_acc:
 					past_acc=acc
-					save_path = saver.save(sess, "/home/ubuntu/gender_age/gender_neutral/saved_model/model.ckpt")
+					save_path = saver.save(sess, "/home/ubuntu/gender_age/gender/saved_model/model.ckpt")
 					print("Model saved in file: %s" % save_path)
 					
 

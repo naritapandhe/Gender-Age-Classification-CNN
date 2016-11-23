@@ -2,11 +2,14 @@ import pickle
 import json
 from pprint import pprint
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
 import collections, numpy
 import matplotlib.pyplot as plt
 import itertools
 import numpy as np
 
+
+test_mode = 'gender'
 
 
 '''
@@ -50,6 +53,15 @@ def load_gt_file(file_path,file_name):
 	with open(file_path+file_name+ '.pkl', 'rb') as f:
 		return pickle.load(f)
 
+def one_hot(y):
+	if test_mode == 'gender':
+		y_ret = np.zeros((len(y), 2))
+	else:
+		y_ret = np.zeros((len(y), 8))
+
+	y_ret[np.arange(len(y)), y.astype(int)] = 1
+	return y_ret
+
 
 def load_predictions(file_name):
 	output = []
@@ -68,74 +80,100 @@ def load_predictions(file_name):
 	return output   
 
 def main():
-	#gtfile_path = '/Volumes/Mac-B/faces-recognition/new_dicts/male/'
-	#gtfile_name = 'fold_4_data'
-	#predicted_file_path = '/Users/admin/Documents/pythonworkspace/data-science-practicum/final-project/gender-age-classification/outputs/base_model/age_predictions.txt'
-	predicted_file_path = '/Volumes/Mac-B/faces-recognition/new_model_dicts/alldata/gender_prediction.txt'
-
+	predicted_file_path = '/Volumes/Mac-B/faces-recognition/gender/gender_prediction.txt'
 	#test_file_contents = load_gt_file(gtfile_path,gtfile_name)
 	predictions = load_predictions(predicted_file_path)
-	predictions[predictions == 0] = 'm'
-	predictions[predictions == 1] = 'f'
-
-	match_count = 0
-	unmatch_count = 0
-	one_off_count = 0
-	data = []
-	json_file = '/Volumes/Mac-B/faces-recognition/new_model_dicts/alldata/testing_data.json'
 	
-	with open(json_file) as data_file:    
-		data = json.load(data_file)
 
-	y_true = []
-	y_pred = [] 
-	#pprint(data)
+	test_fold_names = ['fold_4_data']
+	#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
+	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_neutral_data/'
 
-	#dict = {'fold_name': fold, 'images': inputimages, 'genders': genders,'ages':ages, 'folder_names': folder_names, 'image_names':image_names,'face_ids':face_ids}
-	#fold_name = test_file_contents['fold_name']
-	#if fold_name == gtfile_name:
-	#   inputimages = test_file_contents['images']
-	#   #ground_truth = test_file_contents['genders']
-	#   ground_truth = test_file_contents['ages']
 
-	for i in range(len(data)):
-		y_true.append(data[i]['gender'])
-		p = ''
-		if(predictions[i] == 0):
-			p = 'm'
-		else:
-			p = 'f'	
+	for fold in test_fold_names:
+		print('Trying to read test fold: %s......' % fold)
+		gt_file = load_gt_file(pickle_file_path_prefix+fold)
 		
-		y_pred.append(p)
+		gt_ages = []
+		gt_genders = []
 
 		'''
-		if (predictions[i] == data[i]['age']):
-				match_count+=1
-		if  (abs(predictions[i] - data[i]['age'])==1):
+		Load all the ground truth ages
+		'''
+		for i in range(len(gt_file)):
+			current_file = gt_file[i]
+			ages = np.array(current_file['ages'])
+			genders = np.array(current_file['genders'])
+			one_hot1 = one_hot(ages)
+			gt_ages.append(one_hot1)
+			gt_genders.append(genders)
+
+
+		gt_ages = np.array(gt_ages)
+		gt_ages = np.vstack(gt_ages)
+
+		gt_genders = np.array(gt_genders)
+		gt_genders = np.vstack(gt_genders)
+		
+		print ("GT loaded for fold: %s" % fold)
+		print gt_ages.shape
+		print gt_genders.shape
+	
+	y_true = []
+	y_pred = []
+
+	for i in range(len(gt_ages)):
+		y_true.append(gt_ages[i])
+		y_pred.append(predictions[i])
+
+	print("#GT: %i, PT: %i" %(len(y_true), len(y_pred)))	
+
+
+	male_count = 0			
+	male_exact_match = 0
+	male_one_off_count = 0
+
+	female_count = 0
+	female_exact_match = 0
+	female_one_off_count = 0
+
+	one_off_count = 0
+
+
+	for i in range(len(y_true)):
+		if  (abs(y_true[i] - y_pred[i])<=1):
 				one_off_count+=1
-		'''
-		if(p==data[i]['gender']):
-			match_count+=1			
+
+		if(gt_genders[i]==0):
+			#Male
+			male_count += 1
+			if(y_true[i] == y_pred[i]):
+				male_exact_match+=1
+				
+			if  (abs(y_true[i] - y_pred[i])<=1):
+				male_one_off_count+=1	
+
 		else:
-		   unmatch_count+=1   
+			#Female
+			female_count += 1
+			if(y_true[i] == y_pred[i]):
+				female_exact_match+=1
+				
+			if  (abs(y_true[i] - y_pred[i])<=1):
+				female_one_off_count+=1	
 
-	#print y_true	
+			
 
-	cnf_matrix = confusion_matrix(y_true, y_pred,labels=['m','f'])	 
-	print cnf_matrix  
-	print("Matched Count: %f" % match_count)                
-	#print("One off Count: %f" % one_off_count)              
-	#print("Unmatched Count: %f" % unmatch_count)
-	accuracy = (float(match_count)/len(data))
-	print("Accuracy: %f" % accuracy)
-	print (collections.Counter(y_true))
-	np.set_printoptions(precision=2)
+	print('Exact: %f, One-Off: %f' % (accuracy_score(y_true, y_pred),(float(one_off_count/len(y_true)))*100))	
+	print('#Males: %i, Exact: %f, One-Off: %f' % (male_count,((float(male_exact_match/male_count))*100),((float(male_one_off_count/male_count))*100)))	
+	print('#Females: %i, Exact: %f, One-Off:: %f' % (female_count,((float(female_exact_match/female_count))*100),((float(female_one_off_count/female_count))*100)))		
 
 	# Plot non-normalized confusion matrix
+	cnf_matrix = confusion_matrix(y_true, y_pred,labels=[0,1])	 
+	print cnf_matrix  
 	plt.figure()
 	plot_confusion_matrix(cnf_matrix, classes=['m','f'],title='Confusion matrix, without normalization')
 	plt.show()
-	#print("One Off Accuracy: %f" % (float(one_off_count)/len(data)))
 	
 
 if __name__ == '__main__':

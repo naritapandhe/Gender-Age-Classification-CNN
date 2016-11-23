@@ -4,9 +4,9 @@ import sys
 import pickle
 import random
 
-train_mode = 'age'
+test_mode = 'gender'
 
-def load_train_file(name):
+def load_test_file(name):
 	with open(name + '.pkl', 'rb') as f:
 		return pickle.load(f)
 
@@ -15,7 +15,7 @@ def load_val_file(name):
 		return pickle.load(f)
 
 def one_hot(y):
-	if train_mode == 'gender':
+	if test_mode == 'gender':
 		y_ret = np.zeros((len(y), 2))
 	else:
 		y_ret = np.zeros((len(y), 8))
@@ -25,65 +25,48 @@ def one_hot(y):
 
 
 
-def train():
+def test():
 
 	#List of cv folds
-	cv_fold_names = ['0','1','2','3']
+	test_fold_names = ['fold_4_data']
 	#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
-	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_neutral/'
-	past_acc = 0
-	past_loss = 0
+	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_neutral_data/'
 
 
-
-	for fold in cv_fold_names:
-		print('Trying to read fold: %s......' % fold)
-		train_file = load_train_file(pickle_file_path_prefix+'gender_neutral_cv_train_'+fold)
-		val_file = load_val_file(pickle_file_path_prefix+'gender_neutral_cv_val_'+fold)
+	for fold in test_fold_names:
+		print('Trying to read test fold: %s......' % fold)
+		test_file = load_test_file(pickle_file_path_prefix+fold)
 		
-		train_images = []
-		train_ages = []
-
-		val_images = []
-		val_ages = []
-
+		
+		test_images = []
+		test_genders = []
 
 		'''
 		Load all the training images for CV fold. Implies: One CV fold has 3-sub folds.
 		So, it'll load images from all the 3-sub folds
 		'''
-		for i in range(len(train_file)):
-			current_file = train_file[i]
+		for i in range(len(test_file)):
+			current_file = test_file[i]
 			imgs = np.array(current_file['images'])
-			ages = np.array(current_file['ages'])
-			one_hot1 = one_hot(ages)
-			train_images.append(imgs)
-			train_ages.append(one_hot1)
+			genders = np.array(current_file['genders'])
+			one_hot1 = one_hot(genders)
+			test_images.append(imgs)
+			test_genders.append(one_hot1)
 
 
-		val_images = np.array(val_file['images'])
-		val_ages = np.array(val_file['ages'])
-		val_ages = one_hot(val_ages)
 
-		train_images = np.array(train_images)
-		train_images = np.vstack(train_images)
+		test_images = np.array(test_images)
+		test_images = np.vstack(test_images)
 		
-		train_ages = np.array(train_ages)
-		train_ages = np.vstack(train_ages)
+		test_genders = np.array(test_genders)
+		test_genders = np.vstack(test_genders)
 		
-		print ("Train+Val Details for fold: %s" % fold)
-		print train_images.shape
-		print train_ages.shape
-
-		print val_images.shape
-		print val_ages.shape
+		print ("Test data done for fold: %s" % fold)
+		print test_images.shape
+		print test_genders.shape
 		print(' ')
 
-		X_train = train_images
-		y_train = train_ages
-
-		X_val = val_images
-		y_val = val_ages
+		X_test = test_images
 
 		print ('Training, Validation done for fold: %s\n' % fold)
 		image_size = 227
@@ -93,7 +76,7 @@ def train():
 		height = 256
 		new_width = 227
 		new_height = 227
-		num_labels = 8
+		num_labels = 2
 
 
 		sess = tf.InteractiveSession()
@@ -190,6 +173,7 @@ def train():
 
 		sess.run(init_op)
 
+		'''
 		num_steps = 25000
 		for i in range(num_steps):
 			indices = np.random.permutation(X_train.shape[0])[:batch_size]
@@ -256,22 +240,57 @@ def train():
 				print("Iteration: %i. Val loss %.5f Validation Minibatch accuracy: %.1f%%" % (i, np.mean(val_losses), np.mean(val_accuracies)))
 				# Save the variables to disk.
 				
-				'''
+				#accuracyList.append(acc)
+				#accuracyList.append(acc)
 				if mean_loss < past_loss:
 					past_loss = mean_loss
 					save_path = saver.save(sess, "/home/ubuntu/gender_age/gender_neutral/saved_model/model.ckpt")
 					print("Model saved in file: %s" % save_path)
 
-				'''	
 				if acc > past_acc:
 					past_acc=acc
 					save_path = saver.save(sess, "/home/ubuntu/gender_age/gender_neutral/saved_model/model.ckpt")
 					print("Model saved in file: %s" % save_path)
-					
+		'''	
+		print "Restoring the model and predicting....."
+		num_steps = 25000
+		ckpt = tf.train.get_checkpoint_state("/home/ubuntu/gender_age/gender/saved_model/model.ckpt")
+		if ckpt and ckpt.model_checkpoint_path:
+		    # Restores from checkpoint
+		    saver.restore(sess, "/home/ubuntu/gender_age/gender/saved_model/model.ckpt")
+		    print "Model loaded"
+		    for i in range(num_steps):
+		            #run model on test
+		            if (i % 1000 == 0):
+		                print i
+		                preds = []
+		                for j in range(0,X_test.shape[0],batch_size):
+		                    X_batch = X_test[j:j+batch_size,:,:,:]
+		              
+		                    #Center Crop
+		                    left = (width - new_width)/2
+		                    top = (height - new_height)/2
+		                    right = (width + new_width)/2
+		                    bottom = (height + new_height)/2
+		                    X_batch = X_batch[:,left:right,top:bottom,:]
+
+		                    feed_dict={tfx:X_batch}
+		                    p = sess.run(prediction, feed_dict=feed_dict)
+		                    preds.append(np.argmax(p, 1))
+
+		                pred = np.concatenate(preds)
+		                np.savetxt('/home/ubuntu/gender_age/gender/gender_prediction.txt',pred,fmt='%.0f') 
+
+
+		    print ("Done predicitng...")               
+
+		else:
+		    print ("No checkpoint file found")        
+
 
 
 def main():
-	train()
+	test()
 
 if __name__=='__main__':
 	main()	
