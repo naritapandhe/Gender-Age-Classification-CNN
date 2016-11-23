@@ -44,16 +44,22 @@ def test():
 		'''
 		Load all the training images for CV fold. Implies: One CV fold has 3-sub folds.
 		So, it'll load images from all the 3-sub folds
-		'''
+		
 		for i in range(len(test_file)):
+			print i
+			print len(test_file)
 			current_file = test_file[i]
 			imgs = np.array(current_file['images'])
 			ages = np.array(current_file['ages'])
 			one_hot1 = one_hot(ages)
 			test_images.append(imgs)
 			test_ages.append(one_hot1)
-
-
+		'''	
+		imgs = np.array(test_file['images'])
+		ages = np.array(test_file['ages'])
+		one_hot1 = one_hot(ages)
+		test_images.append(imgs)
+		test_ages.append(one_hot1)	
 
 		test_images = np.array(test_images)
 		test_images = np.vstack(test_images)
@@ -67,8 +73,11 @@ def test():
 		print(' ')
 
 		X_test = test_images
+		
 
-		print ('Training, Validation done for fold: %s\n' % fold)
+		print ('Testing data read for fold: %s\n' % fold)
+		print X_test.shape
+
 		image_size = 227
 		num_channels = 3
 		batch_size = 64
@@ -253,15 +262,15 @@ def test():
 					print("Model saved in file: %s" % save_path)
 		'''	
 		print "Restoring the model and predicting....."
-		num_steps = 25000
-		ckpt = tf.train.get_checkpoint_state("/home/ubuntu/gender_age/gender_neutral/saved_model/model.ckpt")
+		num_steps = 1
+		ckpt = tf.train.get_checkpoint_state("/home/ubuntu/gender_age/gender_neutral_data/saved_model/")
 		if ckpt and ckpt.model_checkpoint_path:
 		    # Restores from checkpoint
-		    saver.restore(sess, "/home/ubuntu/gender_age/gender_neutral/saved_model/model.ckpt")
+		    saver.restore(sess, "/home/ubuntu/gender_age/gender_neutral_data/saved_model/model.ckpt")
 		    print "Model loaded"
 		    for i in range(num_steps):
 		            #run model on test
-		            if (i % 1000 == 0):
+		            if (i % 1 == 0):
 		                print i
 		                preds = []
 		                for j in range(0,X_test.shape[0],batch_size):
@@ -279,7 +288,7 @@ def test():
 		                    preds.append(np.argmax(p, 1))
 
 		                pred = np.concatenate(preds)
-		                np.savetxt('/home/ubuntu/gender_age/gender_neutral/gender_neutral_age_prediction.txt',pred,fmt='%.0f') 
+		                np.savetxt('/home/ubuntu/gender_age/gender_neutral_data/gender_neutral_age_prediction1.txt',pred,fmt='%.0f') 
 
 
 		    print ("Done predicitng...")               
@@ -287,7 +296,7 @@ def test():
 		else:
 		    print ("No checkpoint file found")        
 
-
+	
 
 def main():
 	test()
