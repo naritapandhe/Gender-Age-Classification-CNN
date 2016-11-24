@@ -190,11 +190,11 @@ def create_test_data(fold):
 	save_json(femalejson,fold,'/Volumes/Mac-B/faces-recognition/22Nov/jsons/')
 
 def main():
-	#train_fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']
-	#create_train_data(train_fold_names)
+	train_fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']
+	create_train_data(train_fold_names)
 
-	test_fold_name = 'fold_4_data'
-	create_test_data(test_fold_name)
+	#test_fold_name = 'fold_4_data'
+	#create_test_data(test_fold_name)
 
 
 if __name__ == "__main__":

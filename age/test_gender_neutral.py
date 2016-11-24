@@ -262,7 +262,7 @@ def test():
 					print("Model saved in file: %s" % save_path)
 		'''	
 		print "Restoring the model and predicting....."
-		num_steps = 1
+		num_steps = 100
 		ckpt = tf.train.get_checkpoint_state("/home/ubuntu/gender_age/gender_neutral_data/saved_model/")
 		if ckpt and ckpt.model_checkpoint_path:
 		    # Restores from checkpoint
@@ -270,7 +270,7 @@ def test():
 		    print "Model loaded"
 		    for i in range(num_steps):
 		            #run model on test
-		            if (i % 1 == 0):
+		            if (i % 10 == 0):
 		                print i
 		                preds = []
 		                for j in range(0,X_test.shape[0],batch_size):
@@ -288,7 +288,7 @@ def test():
 		                    preds.append(np.argmax(p, 1))
 
 		                pred = np.concatenate(preds)
-		                np.savetxt('/home/ubuntu/gender_age/gender_neutral_data/gender_neutral_age_prediction1.txt',pred,fmt='%.0f') 
+		                np.savetxt('/home/ubuntu/gender_age/gender_neutral_data/gender_neutral_age_prediction100.txt',pred,fmt='%.0f') 
 
 
 		    print ("Done predicitng...")               

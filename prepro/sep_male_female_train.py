@@ -4,7 +4,6 @@ import PIL
 from PIL import Image
 import pickle
 import random
-import matplotlib.pyplot as plt
 import json
 from ast import literal_eval as make_tuple
 from operator import itemgetter
@@ -90,10 +89,10 @@ def read_fold_gender_wise(fold_csv_prefix,fold_image_prefix,fold_names):
 		print ('')
 
 		currDict = {'fold_name': fold, 'images': maleinputimages, 'genders': malegenders, 'ages': maleages}
-		save_pickle(currDict,'male_'+fold, '/Volumes/Mac-B/faces-recognition/gender_based_data/')
+		save_pickle(currDict,'male_'+fold, '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/')
 
 		currDict = {'fold_name': fold, 'images': femaleinputimages, 'genders': femalegenders, 'ages': femaleages}
-		save_pickle(currDict,'female_'+fold, '/Volumes/Mac-B/faces-recognition/gender_based_data/')
+		save_pickle(currDict,'female_'+fold, '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/')
 
 
 def create_crossval_data(fold_names):
@@ -104,6 +103,9 @@ def create_crossval_data(fold_names):
 	cv_val=[]
 
 	for gender in genders:
+		cv_train = []
+		cv_val=[]
+
 		prefix_fold_name=gender+'_'
 		for i in range(total_files):
 			intermediate = []
@@ -135,7 +137,8 @@ def create_crossval_data(fold_names):
 			cv_val.append(fold_names[j])
 		
 		pprint(cv_train)
-		pprint(cv_val)	
+		pprint(cv_val)
+		print (' ')	
 		
 		for i in range(len(cv_train)):
 			train_files = cv_train[i]
@@ -143,26 +146,26 @@ def create_crossval_data(fold_names):
 			val_data = []
 
 			for ii in range(len(train_files)):
-				train_file_data = load_pickle('/Volumes/Mac-B/faces-recognition/gender_based_data/',prefix_fold_name+train_files[ii])
+				train_file_data = load_pickle('/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/',prefix_fold_name+train_files[ii])
 				train_data.append(train_file_data)
 
-			val_data = load_pickle('/Volumes/Mac-B/faces-recognition/gender_based_data/',prefix_fold_name+cv_val[i])	
+			val_data = load_pickle('/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/',prefix_fold_name+cv_val[i])	
 			print (cv_val[i])
 			print len(val_data)
 
-			save_pickle(train_data,gender+'_cv_train_'+str(i), '/Volumes/Mac-B/faces-recognition/gender_based_data/')
-			save_pickle(val_data,gender+'_cv_val_'+str(i), '/Volumes/Mac-B/faces-recognition/gender_based_data/')
+			save_pickle(train_data,gender+'_cv_train_'+str(i), '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/')
+			save_pickle(val_data,gender+'_cv_val_'+str(i), '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/')
 
 			print("Train and val created for fold: %i" % i)
-	
+		
 	
 def main():
-	fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data','fold_4_data']	
-	read_fold_gender_wise('/Volumes/Mac-B/faces-recognition/csvs/','/Volumes/Mac-B/faces-recognition/aligned/',fold_names)
+	fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']	
+	read_fold_gender_wise('/home/ubuntu/gender_age/data/csvs/csvs/','/home/ubuntu/gender_age/data/images/aligned/',fold_names)
 	
 	
-	#fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']	
-	#create_crossval_data(fold_names)
+	fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']	
+	create_crossval_data(fold_names)
 
 if __name__ == "__main__":
 	main()

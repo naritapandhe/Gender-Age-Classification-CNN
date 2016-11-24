@@ -80,50 +80,41 @@ def load_predictions(file_name):
 	return output   
 
 def main():
-	predicted_file_path = '/Volumes/Mac-B/faces-recognition/gender/gender_prediction.txt'
+	predicted_file_path = './new_gender_prediction.txt'
 	#test_file_contents = load_gt_file(gtfile_path,gtfile_name)
 	predictions = load_predictions(predicted_file_path)
+	predictions = np.array(predictions)
 	
 
 	test_fold_names = ['fold_4_data']
-	#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
-	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_neutral_data/'
+	pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
+	#pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_neutral_data/'
 
 
 	for fold in test_fold_names:
 		print('Trying to read test fold: %s......' % fold)
-		gt_file = load_gt_file(pickle_file_path_prefix+fold)
+		gt_file = load_gt_file(pickle_file_path_prefix,fold)
 		
-		gt_ages = []
 		gt_genders = []
 
 		'''
 		Load all the ground truth ages
 		'''
-		for i in range(len(gt_file)):
-			current_file = gt_file[i]
-			ages = np.array(current_file['ages'])
-			genders = np.array(current_file['genders'])
-			one_hot1 = one_hot(ages)
-			gt_ages.append(one_hot1)
-			gt_genders.append(genders)
 
+		
+		genders = np.array(gt_file['genders'])
+		gt_genders = genders
 
-		gt_ages = np.array(gt_ages)
-		gt_ages = np.vstack(gt_ages)
-
-		gt_genders = np.array(gt_genders)
-		gt_genders = np.vstack(gt_genders)
 		
 		print ("GT loaded for fold: %s" % fold)
-		print gt_ages.shape
 		print gt_genders.shape
+		print predictions.shape
 	
 	y_true = []
 	y_pred = []
 
-	for i in range(len(gt_ages)):
-		y_true.append(gt_ages[i])
+	for i in range(len(gt_genders)):
+		y_true.append(gt_genders[i])
 		y_pred.append(predictions[i])
 
 	print("#GT: %i, PT: %i" %(len(y_true), len(y_pred)))	
@@ -138,9 +129,13 @@ def main():
 	female_one_off_count = 0
 
 	one_off_count = 0
+	exact_match_count = 0
 
 
 	for i in range(len(y_true)):
+		if  (y_true[i] == y_pred[i]):
+				exact_match_count+=1
+
 		if  (abs(y_true[i] - y_pred[i])<=1):
 				one_off_count+=1
 
@@ -164,9 +159,16 @@ def main():
 
 			
 
-	print('Exact: %f, One-Off: %f' % (accuracy_score(y_true, y_pred),(float(one_off_count/len(y_true)))*100))	
-	print('#Males: %i, Exact: %f, One-Off: %f' % (male_count,((float(male_exact_match/male_count))*100),((float(male_one_off_count/male_count))*100)))	
-	print('#Females: %i, Exact: %f, One-Off:: %f' % (female_count,((float(female_exact_match/female_count))*100),((float(female_one_off_count/female_count))*100)))		
+	print('Exact: %f, One-Off: %f' % (accuracy_score(y_true, y_pred),(float(one_off_count)/len(y_true))))	
+	print('#Exact: %f, #One-Off: %f\n' % (exact_match_count,(float(one_off_count))))	
+
+	print('#Males: %i, Exact: %f, One-Off: %f' % (male_count,((float(male_exact_match)/male_count)),((float(male_one_off_count)/male_count))))	
+	print('#Males: %i, Exact: %f, One-Off: %f\n' % (male_count,((float(male_exact_match))),((float(male_one_off_count)))))	
+
+
+	print('Females: %i, Exact: %f, One-Off: %f' % (female_count,((float(female_exact_match)/female_count)),((float(female_one_off_count)/female_count))))		
+	print('#Females: %i, Exact: %f, One-Off: %f' % (female_count,((float(female_exact_match))),((float(female_one_off_count)))))		
+
 
 	# Plot non-normalized confusion matrix
 	cnf_matrix = confusion_matrix(y_true, y_pred,labels=[0,1])	 

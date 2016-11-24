@@ -80,7 +80,8 @@ def load_predictions(file_name):
 	return output   
 
 def main():
-	predicted_file_path = './gender_neutral_age_prediction100.txt'
+	predicted_file_path = './new_gender_neutral_age_prediction.txt'
+	#predicted_file_path = '/Users/admin/Documents/pythonworkspace/data-science-practicum/final-project/gender-age-classification/outputs/base_model/age_predictions.txt'
 	#test_file_contents = load_gt_file(gtfile_path,gtfile_name)
 	predictions = load_predictions(predicted_file_path)
 	#predictions[predictions == 0] = 'm'

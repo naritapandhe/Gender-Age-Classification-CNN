@@ -23,20 +23,51 @@ def one_hot(y):
 	y_ret[np.arange(len(y)), y.astype(int)] = 1
 	return y_ret
 
+def load_test_file(name):
+	with open(name + '.pkl', 'rb') as f:
+		return pickle.load(f)
 
 
-def train():
+
+def train_and_test():
 
 	#List of cv folds
 	cv_fold_names = ['0','1','2','3']
 	#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
+	past_tacc = 0
 	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_neutral/'
-	past_acc = 0
-	past_loss = 0
+	
+	test_fold_names = ['fold_4_data']
+	#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
+	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_neutral_data/'
+	print('Trying to read test fold: %s......' % test_fold_names[0])
+	test_file = load_test_file(pickle_file_path_prefix+test_fold_names[0])
+		
+		
+	test_images = []
+	test_genders = []
+	imgs = np.array(test_file['images'])
+	genders = np.array(test_file['genders'])
+	one_hot1 = one_hot(genders)
+	test_images.append(imgs)
+	test_genders.append(one_hot1)	
 
+	test_images = np.array(test_images)
+	test_images = np.vstack(test_images)
+	
+	test_genders = np.array(test_genders)
+	test_genders = np.vstack(test_genders)
+	
+	X_test = test_images
+	y_test = test_genders
 
 
 	for fold in cv_fold_names:
+		print ("Test data done for fold: %s" % test_fold_names[0])
+		print X_test.shape
+		print y_test.shape
+		print(' ')
+
 		print('Trying to read fold: %s......' % fold)
 		train_file = load_train_file(pickle_file_path_prefix+'gender_neutral_cv_train_'+fold)
 		val_file = load_val_file(pickle_file_path_prefix+'gender_neutral_cv_val_'+fold)
@@ -251,27 +282,46 @@ def train():
 					val_accuracies.append(accuracy(predictions,y_batch))
 					val_losses.append(l)
 
-				acc = np.mean(val_accuracies)    
-				mean_loss = np.mean(val_losses)    
 				print("Iteration: %i. Val loss %.5f Validation Minibatch accuracy: %.1f%%" % (i, np.mean(val_losses), np.mean(val_accuracies)))
-				# Save the variables to disk.
 				
-				'''
-				if mean_loss < past_loss:
-					past_loss = mean_loss
-					save_path = saver.save(sess, "/home/ubuntu/gender_age/gender/saved_model/model.ckpt")
-					print("Model saved in file: %s" % save_path)
+				if (i % 1000 == 0):
+					test_accuracies = []
+					test_losses = []
+					preds = []
+					for j in range(0,X_test.shape[0],batch_size):
+						X_batch = X_test[j:j+batch_size,:,:,:]
+						y_batch = y_test[j:j+batch_size,:]
+				  
+						#Center Crop
+						left = (width - new_width)/2
+						top = (height - new_height)/2
+						right = (width + new_width)/2
+						bottom = (height + new_height)/2
+						X_batch = X_batch[:,left:right,top:bottom,:]
 
-				'''	
-				if acc > past_acc:
-					past_acc=acc
-					save_path = saver.save(sess, "/home/ubuntu/gender_age/gender/saved_model/model.ckpt")
-					print("Model saved in file: %s" % save_path)
+						feed_dict={tfx:X_batch,tfy:y_batch}
+						l, predictions = sess.run([cross_entropy,prediction], feed_dict=feed_dict)   
+						test_accuracies.append(accuracy(predictions,y_batch))
+						test_losses.append(l)
+						preds.append(np.argmax(predictions, 1))
+
+					tacc = np.mean(test_accuracies)    
+					print("Iteration: %i. Test loss %.5f. Test Minibatch accuracy: %.5f" % (i, np.mean(test_losses),tacc))
+					# Save the variables to disk.
+				
+					if tacc > past_tacc:
+						past_tacc = tacc
+						save_path = saver.save(sess, "/home/ubuntu/gender_age/gender_train_and_testing/saved_model/model.ckpt")
+						print("Model saved in file: %s" % save_path)
+
+						pred = np.concatenate(preds)
+						np.savetxt('/home/ubuntu/gender_age/gender_train_and_testing/new_gender_prediction.txt',pred,fmt='%.0f') 
+
 					
 
 
 def main():
-	train()
+	train_and_test()
 
 if __name__=='__main__':
 	main()	
