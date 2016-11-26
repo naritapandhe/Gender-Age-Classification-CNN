@@ -33,17 +33,16 @@ def load_test_file(name):
 def train_and_test():
 
 	#List of cv folds
-	cv_fold_names = ['0','1','2']
-	#,'3']
+	cv_fold_names = ['0','1','2','3']
 	#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
-	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/cv/male/'
+	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/cv/female/'
 	past_tacc = 0
 	past_tloss = 3.0
 
 
-	test_fold_names = ['male_test']
+	test_fold_names = ['female_test']
 	#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
-	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/cv/male/'
+	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/cv/female/'
 	print('Trying to read test fold: %s......' % test_fold_names[0])
 	
 	test_file = load_test_file(pickle_file_path_prefix+test_fold_names[0])
@@ -74,8 +73,8 @@ def train_and_test():
 		print(' ')
 
 		print('Trying to read training fold: %s......' % fold)
-		train_file = load_train_file(pickle_file_path_prefix+'male_cv_train_'+fold)
-		val_file = load_val_file(pickle_file_path_prefix+'male_cv_val_'+fold)
+		train_file = load_train_file(pickle_file_path_prefix+'female_cv_train_'+fold)
+		val_file = load_val_file(pickle_file_path_prefix+'female_cv_val_'+fold)
 		
 		train_images = []
 		train_ages = []
@@ -228,7 +227,7 @@ def train_and_test():
 
 		sess.run(init_op)
 
-		num_steps = 50000
+		num_steps = 25000
 		for i in range(num_steps):
 			indices = np.random.permutation(X_train.shape[0])[:batch_size]
 			X_batch = X_train[indices,:,:,:]
@@ -248,16 +247,16 @@ def train_and_test():
 						
 			lr = 1e-3
 			feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}      
-			if i >= 10001 and i<20001: 
+			if i >= 5001 and i<10001: 
 				lr = lr*10
 				feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}
-			elif i >= 20001 and i<30001: 
+			elif i >= 10001 and i<15001: 
 				lr = lr*10
 				feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}   
-			elif i >= 30001 and i<40001: 
+			elif i >= 15001 and i<20001: 
 				lr = lr*10
 				feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}   
-			elif i >= 40001 and i<50001: 
+			elif i >= 20001 and i<25001: 
 				lr = lr*10
 				feed_dict = {tfx : X_batch, tfy : y_batch, learning_rate: lr}           
 
@@ -316,11 +315,11 @@ def train_and_test():
 			
 				if tacc > past_tacc:
 					past_tacc = tacc
-					save_path = saver.save(sess, "/home/ubuntu/gender_age/gender_based_train_and_testing/male_based_model/saved_model/model.ckpt")
+					save_path = saver.save(sess, "/home/ubuntu/gender_age/gender_based_train_and_testing/female_based_model/saved_model/model.ckpt")
 					print("Model saved in file: %s" % save_path)
 
 					pred = np.concatenate(preds)
-					np.savetxt('/home/ubuntu/gender_age/gender_based_train_and_testing/male_based_model/male_age_prediction.txt',pred,fmt='%.0f') 
+					np.savetxt('/home/ubuntu/gender_age/gender_based_train_and_testing/female_based_model/female_age_prediction.txt',pred,fmt='%.0f') 
 
 def main():
 	train_and_test()
