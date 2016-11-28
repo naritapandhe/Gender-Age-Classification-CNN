@@ -9,6 +9,7 @@ import json
 from ast import literal_eval as make_tuple
 from operator import itemgetter
 from pprint import pprint
+from skimage import exposure
 
 def save_pickle(obj,name,save_path):
 	with open(save_path+name + '.pkl', 'wb') as f:
@@ -63,6 +64,8 @@ def read_fold(fold_csv_prefix,fold_image_prefix,fold_names):
 					#Resize image
 					image = image.resize((width, height), PIL.Image.ANTIALIAS)
 					image_arr = np.array(image)
+					#image_arr = exposure.equalize_hist(image_arr)
+					
 
 					if(gender == 'm'):
 						g=0
@@ -81,7 +84,7 @@ def read_fold(fold_csv_prefix,fold_image_prefix,fold_names):
 		print ('')
 
 		currDict = {'fold_name': fold, 'images': inputimages, 'genders': genders, 'ages': ages}
-		save_pickle(currDict,fold, '/Volumes/Mac-B/faces-recognition/gender_neutral_data/')
+		save_pickle(currDict,fold, '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/')
 
 
 def create_crossval_data(fold_names):
@@ -128,25 +131,23 @@ def create_crossval_data(fold_names):
 		train_data = []
 		val_data = []
 
-		#for ii in range(len(train_files)):
-			#train_file_data = load_pickle('/Volumes/Mac-B/faces-recognition/gender_neutral_data/',train_files[ii])
-			#train_data.append(train_file_data)
+		for ii in range(len(train_files)):
+			train_file_data = load_pickle('/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/',train_files[ii])
+			train_data.append(train_file_data)
 
-		val_data = load_pickle('/Volumes/Mac-B/faces-recognition/gender_neutral_data/',cv_val[i])	
+		val_data = load_pickle('/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/',cv_val[i])	
 		print (cv_val[i])
 		print len(val_data)
 
-		#save_pickle(train_data,'gender_neutral_cv_train_'+str(i), '/Volumes/Mac-B/faces-recognition/gender_neutral_data/')
-		#save_pickle(val_data,'gender_neutral_cv_val_'+str(i), '/Volumes/Mac-B/faces-recognition/gender_neutral_data/')
+		save_pickle(train_data,'gender_neutral_cv_train_'+str(i), '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/')
+		save_pickle(val_data,'gender_neutral_cv_val_'+str(i), '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/')
 
 		print("Train and val created for fold: %i" % i)
 	
 	
 def main():
-	'''
 	fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data','fold_4_data']	
-	read_fold('/Volumes/Mac-B/faces-recognition/csvs/','/Volumes/Mac-B/faces-recognition/aligned/',fold_names)
-	'''
+	read_fold('/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/data/csvs/','/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/data/aligned/',fold_names)
 	
 	fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']	
 	create_crossval_data(fold_names)

@@ -8,6 +8,7 @@ import json
 from ast import literal_eval as make_tuple
 from operator import itemgetter
 from pprint import pprint
+from skimage import exposure
 
 def save_pickle(obj,name,save_path):
 	with open(save_path+name + '.pkl', 'wb') as f:
@@ -66,6 +67,8 @@ def read_fold_gender_wise(fold_csv_prefix,fold_image_prefix,fold_names):
 					#Resize image
 					image = image.resize((width, height), PIL.Image.ANTIALIAS)
 					image_arr = np.array(image)
+					
+					
 
 					if(gender == 'm'):
 						g=0
@@ -89,10 +92,10 @@ def read_fold_gender_wise(fold_csv_prefix,fold_image_prefix,fold_names):
 		print ('')
 
 		currDict = {'fold_name': fold, 'images': maleinputimages, 'genders': malegenders, 'ages': maleages}
-		save_pickle(currDict,'male_'+fold, '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/')
+		save_pickle(currDict,'male_'+fold, '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/male/')
 
 		currDict = {'fold_name': fold, 'images': femaleinputimages, 'genders': femalegenders, 'ages': femaleages}
-		save_pickle(currDict,'female_'+fold, '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/')
+		save_pickle(currDict,'female_'+fold, '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/female/')
 
 
 def create_crossval_data(fold_names):
@@ -146,26 +149,26 @@ def create_crossval_data(fold_names):
 			val_data = []
 
 			for ii in range(len(train_files)):
-				train_file_data = load_pickle('/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/',prefix_fold_name+train_files[ii])
+				train_file_data = load_pickle('/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/'+gender+'/',prefix_fold_name+train_files[ii])
 				train_data.append(train_file_data)
 
-			val_data = load_pickle('/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/',prefix_fold_name+cv_val[i])	
+			val_data = load_pickle('/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/'+gender+'/',prefix_fold_name+cv_val[i])	
 			print (cv_val[i])
 			print len(val_data)
 
-			save_pickle(train_data,gender+'_cv_train_'+str(i), '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/')
-			save_pickle(val_data,gender+'_cv_val_'+str(i), '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/')
+			save_pickle(train_data,gender+'_cv_train_'+str(i), '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/')
+			save_pickle(val_data,gender+'_cv_val_'+str(i), '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/')
 
 			print("Train and val created for fold: %i" % i)
 		
 	
 def main():
-	fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']	
-	read_fold_gender_wise('/home/ubuntu/gender_age/data/csvs/csvs/','/home/ubuntu/gender_age/data/images/aligned/',fold_names)
+	fold_names = ['fold_4_data','fold_1_data','fold_2_data','fold_3_data','fold_4_data']	
+	read_fold_gender_wise('/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/data/csvs/','/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/data/aligned/',fold_names)
 	
 	
-	fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']	
-	create_crossval_data(fold_names)
+	#fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data']	
+	#create_crossval_data(fold_names)
 
 if __name__ == "__main__":
 	main()

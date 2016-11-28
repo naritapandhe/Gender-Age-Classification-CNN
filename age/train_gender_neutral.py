@@ -35,14 +35,14 @@ def train_and_test():
 	#List of cv folds
 	cv_fold_names = ['0','1','2','3']
 	#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
-	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_neutral_data/'
+	pickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/'
 	past_tacc = 0
 	past_tloss = 3.0
 
 
 	test_fold_names = ['fold_4_data']
 	#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
-	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_neutral_data/'
+	pickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/'
 	print('Trying to read test fold: %s......' % test_fold_names[0])
 	test_file = load_test_file(pickle_file_path_prefix+test_fold_names[0])
 		
@@ -116,7 +116,7 @@ def train_and_test():
 
 		X_train = train_images
 		y_train = train_ages
-		X_train, y_train = shuffle(X_train, y_train, random_state=42)
+		#X_train, y_train = shuffle(X_train, y_train, random_state=42)
 
 		X_val = val_images
 		y_val = val_ages
@@ -201,6 +201,7 @@ def train_and_test():
 
 		cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(fc3,tfy))
 
+		'''
 		 # L2 regularization for the fully connected parameters.
 		regularizers = (  tf.nn.l2_loss(wfc3) + tf.nn.l2_loss(bfc3) +
 						  tf.nn.l2_loss(wfc2) + tf.nn.l2_loss(bfc2) +
@@ -211,12 +212,24 @@ def train_and_test():
 
 		# Add the regularization term to the loss.
 		cross_entropy += 5e-4 * regularizers
+		'''
 
 		prediction=tf.nn.softmax(fc3)
 
 		learning_rate = tf.placeholder(tf.float32, shape=[])
 		
-		train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
+		batch = tf.Variable(0)
+
+		learning_rate = tf.train.exponential_decay(
+		  1e-3,                # Base learning rate.
+		  batch * batch_size,  # Current index into the dataset.
+		  2000,          		# Decay step.
+		  0.0005,                # Decay rate.
+		  staircase=True)
+		
+		# Use simple momentum for the optimization.
+		train_step = tf.train.MomentumOptimizer(learning_rate,0.9).minimize(cross_entropy,global_step=batch)
+
 
 		# Add an op to initialize the variables.
 		init_op = tf.initialize_all_variables()
@@ -226,7 +239,7 @@ def train_and_test():
 
 		sess.run(init_op)
 
-		num_steps = 25000
+		num_steps = 10000
 		for i in range(num_steps):
 			indices = np.random.permutation(X_train.shape[0])[:batch_size]
 			X_batch = X_train[indices,:,:,:]
@@ -292,18 +305,6 @@ def train_and_test():
 				print("Iteration: %i. Val loss %.5f Validation Minibatch accuracy: %.1f%%" % (i, np.mean(val_losses), np.mean(val_accuracies)))
 				# Save the variables to disk.
 				
-				'''
-				if mean_loss < past_loss:
-					past_loss = mean_loss
-					save_path = saver.save(sess, "/home/ubuntu/gender_age/gender_neutral_data/saved_model/model.ckpt")
-					print("Model saved in file: %s" % save_path)
-
-				if acc > past_acc:
-					past_acc=acc
-					save_path = saver.save(sess, "/home/ubuntu/gender_age/gender_neutral_data/saved_model/model.ckpt")
-					print("Model saved in file: %s" % save_path)
-				'''
-				
 				if (i % 1000 == 0):
 					test_accuracies = []
 					test_losses = []
@@ -331,11 +332,11 @@ def train_and_test():
 				
 					if tacc > past_tacc:
 						past_tacc = tacc
-						save_path = saver.save(sess, "/home/ubuntu/gender_age/gender_neutral_data/saved_model/model.ckpt")
+						save_path = saver.save(sess, "/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/model.ckpt")
 						print("Model saved in file: %s" % save_path)
 
 						pred = np.concatenate(preds)
-						np.savetxt('/home/ubuntu/gender_age/gender_neutral_data/new_gender_neutral_age_prediction.txt',pred,fmt='%.0f') 
+						np.savetxt('/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/new_gender_neutral_age_prediction.txt',pred,fmt='%.0f') 
 
 
 			

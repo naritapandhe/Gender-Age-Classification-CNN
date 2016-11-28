@@ -50,7 +50,7 @@ def main():
 
 	test_fold_names = ['fold_4_data']
 	#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
-	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/'
+	pickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/data/test-data/'
 
 
 	for fold in test_fold_names:
@@ -88,9 +88,9 @@ def main():
 
 	for i in range(len(gt_genders)):
 		'''
-			If the predicted gender is male:
+			If the actual gender is male:
 		'''
-		if (predictions[i] == 0):
+		if (gt_genders[i] == 0):
 			maleimages.append(gt_images[i])
 			maleactualages.append(gt_ages[i])
 			maleactualgenders.append(gt_genders[i])
@@ -110,10 +110,10 @@ def main():
 
 
 	currDict = {'test_data_for': 'male_test_data', 'images': maleimages, 'gt_genders': maleactualgenders,'pt_genders':malepredictedgenders , 'gt_ages': maleactualages}
-	save_pickle(currDict,'male_test', '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/cv/male/')
+	save_pickle(currDict,'male_test', '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/male/')
 
 	currDict = {'test_data_for': 'female_test_data', 'images': femaleimages, 'gt_genders': femaleactualgenders,'pt_genders':femalepredictedgenders , 'gt_ages': femaleactualages}
-	save_pickle(currDict,'female_test', '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/cv/female/')
+	save_pickle(currDict,'female_test', '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/female/')
 
 	print("Testing data created for male and females")
 

@@ -80,7 +80,8 @@ def load_predictions(file_name):
 	return output   
 
 def main():
-	predicted_file_path = './new_gender_neutral_age_prediction.txt'
+	predicted_file_path = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/new_gender_neutral_age_prediction.txt' 
+
 	#predicted_file_path = '/Users/admin/Documents/pythonworkspace/data-science-practicum/final-project/gender-age-classification/outputs/base_model/age_predictions.txt'
 	#test_file_contents = load_gt_file(gtfile_path,gtfile_name)
 	predictions = load_predictions(predicted_file_path)
@@ -90,7 +91,7 @@ def main():
 
 
 	test_fold_names = ['fold_4_data']
-	pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
+	pickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/'
 	#pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_neutral_data/'
 
 
@@ -196,7 +197,6 @@ def main():
 	print('Females: %i, Exact: %f, One-Off: %f' % (female_count,((float(female_exact_match)/female_count)),((float(female_one_off_count)/female_count))))		
 	print('#Females: %i, Exact: %f, One-Off: %f' % (female_count,((float(female_exact_match))),((float(female_one_off_count)))))		
 
-	'''
 	# Plot non-normalized confusion matrix
 	classes = [0,1,2,3,4,5,6,7]
 	cnf_matrix = confusion_matrix(y_true, y_pred,labels=classes)	 
@@ -204,7 +204,6 @@ def main():
 	plt.figure()
 	plot_confusion_matrix(cnf_matrix, classes=classes,title='Confusion matrix, without normalization')
 	plt.show()
-	'''
 	
 
 if __name__ == '__main__':
