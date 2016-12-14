@@ -47,10 +47,10 @@ For both Age and Gender classification, training is performed using Stochastic G
 ##########################################################
 ## Model Description
 
-Ensure the following Python packages are installed on your instance:
+Ensure the following Python packages are installed on your machine:
 
 * numpy
-* tensorflow (For instructions on how to setup TensorFlow on AWS, see TensorFlow on AWS Instructions)
+* tensorflow 
 * sklearn
 * scipy 
 * pandas
@@ -62,11 +62,12 @@ Once your environment has been setup, download the project files and run the fol
  The script expects: Path to training and testing data.
  Cross validation accuracy is recorded every 1000 iterations. Predictions are saved every 1000 iterations to predicted_genders.txt
 
-2. Based on the gender prediction results, to separate out the data of predicted males and females, execute the script: gender/create_gender_test_based_on_predictions.py
+2. Based on the gender classification results, to separate out the data of predicted males and females, execute the script: gender/create_gender_test_based_on_predictions.py
 
 3. Once we have separated out the predicted males and females, we can then feed them gender-based age classifiers to get the age. Inorder to do so, execute the script: 
   1. python age/train_n_test_male_model.py #Execute this for predicted males
   2. python age/train_n_test_female_model.py #Execute this for predicted females
+  For both the scripts, cross validation accuracy is recorded every 1000 iterations. Predictions are saved every 1000 iterations to predicted_X_age_prediction.txt X -> can be either males or females.
 
 
 
