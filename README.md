@@ -72,8 +72,9 @@ Once your environment has been setup, download the project files and run the fol
   2. python age/train_n_test_female_model.py  *#Execute this for predicted females*
   For both the scripts, cross validation accuracy is recorded every 1000 iterations. Predictions are saved every 1000 iterations to predicted_X_age_prediction.txt  *X -> can be either males or females*
 
-
-
+##########################################################
+## Results
+All the results have been logged here: https://github.com/eds-uga/gender-age-classification/issues/3
 
 
  
