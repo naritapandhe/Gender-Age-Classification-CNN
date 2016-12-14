@@ -41,16 +41,16 @@ def load_predictions(file_name):
 	return output   
 
 def main():
-	predicted_file_path = './new_gender_prediction.txt'
+	predicted_file_path = '/media/narita/My Passport/Gender-Age Classification/gender_classification_results/gender_predictions_outputs/predicted_genders.txt'
 	predictions = load_predictions(predicted_file_path)
 	predictions = np.array(predictions)
 	print collections.Counter(predictions)
-
+	
 
 
 	test_fold_names = ['fold_4_data']
 	#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
-	pickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/data/test-data/'
+	pickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/'
 
 
 	for fold in test_fold_names:
@@ -72,8 +72,8 @@ def main():
 		print ("Images shape:")
 		print gt_images.shape
 
-		print ("Prediction shape: ")
-		print predictions.shape
+		#print ("Prediction shape: ")
+		#print predictions.shape
 	
 	maleimages = []
 	maleactualages = []
@@ -90,30 +90,31 @@ def main():
 		'''
 			If the actual gender is male:
 		'''
-		if (gt_genders[i] == 0):
-			maleimages.append(gt_images[i])
-			maleactualages.append(gt_ages[i])
-			maleactualgenders.append(gt_genders[i])
-			malepredictedgenders.append(predictions[i])
+		#if (predictions[i] == 0):
+		maleimages.append(gt_images[i])
+		maleactualages.append(gt_ages[i])
+		maleactualgenders.append(gt_genders[i])
+		malepredictedgenders.append(predictions[i])
 
+		'''
 		else:
 			femaleimages.append(gt_images[i])
 			femaleactualages.append(gt_ages[i])
 			femaleactualgenders.append(gt_genders[i])
 			femalepredictedgenders.append(predictions[i])
-
+		'''
 
 	print ('Created testing data based on predicted genders..')            
 	print ('Male Images: %i, Male Actual Gender: %i, Male Predicted Gender: %i , Male Actual Ages: %i' % (len(maleimages), len(maleactualgenders), len(malepredictedgenders), len(maleactualages)))
-	print ('Female Images: %i, Female Actual Gender: %i, Female Predicted Gender: %i , Female Actual Ages: %i' % (len(femaleimages), len(femaleactualgenders), len(femalepredictedgenders), len(femaleactualages)))
+	#print ('Female Images: %i, Female Actual Gender: %i, Female Predicted Gender: %i , Female Actual Ages: %i' % (len(femaleimages), len(femaleactualgenders), len(femalepredictedgenders), len(femaleactualages)))
 	print ('')
 
 
-	currDict = {'test_data_for': 'male_test_data', 'images': maleimages, 'gt_genders': maleactualgenders,'pt_genders':malepredictedgenders , 'gt_ages': maleactualages}
-	save_pickle(currDict,'male_test', '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/male/')
+	currDict = {'test_data_for': 'gender_neutral_test_data_based_on_predicted_genders', 'images': maleimages, 'gt_genders': maleactualgenders,'pt_genders':malepredictedgenders , 'gt_ages': maleactualages}
+	save_pickle(currDict,'gender_neutral_test_data_based_on_predicted_genders', '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/')
 
-	currDict = {'test_data_for': 'female_test_data', 'images': femaleimages, 'gt_genders': femaleactualgenders,'pt_genders':femalepredictedgenders , 'gt_ages': femaleactualages}
-	save_pickle(currDict,'female_test', '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/female/')
+	#currDict = {'test_data_for': 'female_test_data', 'images': femaleimages, 'gt_genders': femaleactualgenders,'pt_genders':femalepredictedgenders , 'gt_ages': femaleactualages}
+	#save_pickle(currDict,'predicted_female_test', '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/final_test_data_based_on_predicted_genders/female/')
 
 	print("Testing data created for male and females")
 

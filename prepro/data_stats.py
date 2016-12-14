@@ -231,50 +231,23 @@ def load_train_file(name):
 	with open(name + '.pkl', 'rb') as f:
 		return pickle.load(f)
 
-def get_male_data_stats():
-	cv_fold_names = ['4']
-	pickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/female/'
+def get_gender_based_age_data_stats(gender,fold_names,pickle_file_path_prefix):
 
-	i = 0;
-	width = 256
-	height = 256
-	
-	#fold_ages_cnt = [None] * 8
-	fold_age0_cnt = {0:0, 1:0}
-	fold_age1_cnt = {0:0, 1:0}
-	fold_age2_cnt = {0:0, 1:0}
-	fold_age3_cnt = {0:0, 1:0}
-	fold_age4_cnt = {0:0, 1:0}
-	fold_age5_cnt = {0:0, 1:0}
-	fold_age6_cnt = {0:0, 1:0}
-	fold_age7_cnt = {0:0, 1:0}
+	'''
+	Read every fold based on the gender
+	Read the values for age and print the
+	counts for each age category
+	'''
 
-	for fold in cv_fold_names:
-		fold_genders_cnt = {}
-		fold_genders_cnt[0] = 0
-		fold_genders_cnt[1] = 0
-
-		
-
-
-	for fold in cv_fold_names:
+	for fold in fold_names:
 		train_ages = []
 	
 		print('Trying to read training fold: %s......' % fold)
-		train_file = load_train_file(pickle_file_path_prefix+'female_fold_'+fold+'_data')
+		train_file = load_obj(pickle_file_path_prefix+fold)
 
-		'''
-		for i in range(len(train_file)):
-			current_file = train_file[i]
-			print current_file['fold_name']
-			ages = np.array(current_file['ages'])
-			print ages.shape
-			x = Counter(ages)
-			print sorted(x.items(), key=lambda i: i[0])
-		'''
 		current_file = train_file
-		print current_file['fold_name']
-		ages = np.array(current_file['ages'])
+		print current_file['test_data_for']
+		ages = np.array(current_file['gt_ages'])
 		print ages.shape
 		x = Counter(ages)
 		print sorted(x.items(), key=lambda i: i[0])
@@ -282,12 +255,39 @@ def get_male_data_stats():
 		print ("\n")
 		
 
+def get_gender_stats(file_names,pickle_file_path_prefix):
+	'''
+	Read every gender_neutral fold
+	Count the no. of males and females in it
+	'''
+	for file in file_names:
+		file_data = load_obj(pickle_file_path_prefix+file)
+
+		print file_data['fold_name']
+		genders = np.array(file_data['genders'])
+		x = Counter(genders)
+		print sorted(x.items(), key=lambda i: i[0])
+		
+		print ("\n")
+
+
 
 def main():
 	#train_fold_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data','fold_4_data']
-	train_fold_names = ['fold_4_data']
+	#train_fold_names = ['fold_4_data']
 	
-	get_male_data_stats()
+	#get_male_data_stats()
+
+
+	fold_names = ['female_test']
+	pickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/female/'
+	get_gender_based_age_data_stats('female',fold_names,pickle_file_path_prefix)
+
+	'''
+	file_names = ['fold_0_data','fold_1_data','fold_2_data','fold_3_data','fold_4_data']
+	pickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/'
+	get_gender_stats(file_names,pickle_file_path_prefix)
+	'''
 
 	
 if __name__ == "__main__":

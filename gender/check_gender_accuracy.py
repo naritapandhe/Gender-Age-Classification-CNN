@@ -80,14 +80,13 @@ def load_predictions(file_name):
 	return output   
 
 def main():
-	predicted_file_path = './new_gender_prediction.txt'
-	#test_file_contents = load_gt_file(gtfile_path,gtfile_name)
+	predicted_file_path = '/media/narita/My Passport/Gender-Age Classification/final_data/gender_predictions_outputs/predicted_genders.txt'
 	predictions = load_predictions(predicted_file_path)
 	predictions = np.array(predictions)
 	
 
 	test_fold_names = ['fold_4_data']
-	pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
+	pickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/'
 	#pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_neutral_data/'
 
 
