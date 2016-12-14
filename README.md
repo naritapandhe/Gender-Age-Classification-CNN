@@ -67,7 +67,7 @@ Once your environment has been setup, download the project files and run the fol
 3. Once we have separated out the predicted males and females, we can then feed them gender-based age classifiers to get the age. Inorder to do so, execute the script: 
   1. python age/train_n_test_male_model.py #Execute this for predicted males
   2. python age/train_n_test_female_model.py #Execute this for predicted females
-  For both the scripts, cross validation accuracy is recorded every 1000 iterations. Predictions are saved every 1000 iterations to predicted_X_age_prediction.txt X -> can be either males or females.
+  For both the scripts, cross validation accuracy is recorded every 1000 iterations. Predictions are saved every 1000 iterations to predicted_X_age_prediction.txt  *X -> can be either males or females*
 
 
 
