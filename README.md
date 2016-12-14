@@ -4,8 +4,10 @@
 ## Overview
 This is my final course projects for CSCI 8360 Data Science Practicum course. This project focuses on gender and age classification based on images. My work builds on the previous work:
 
- -*Gil Levi & Tal Hassner Alexander, Age and Gender Classification using Convolutional Neural Networks. 2015*
- -*Ari Ekmekji. Convolutional Neural Networks for Age and Gender Classification, Stanford University. 2016*
+```
+ Gil Levi & Tal Hassner Alexander, Age and Gender Classification using Convolutional Neural Networks. 2015
+ Ari Ekmekji. Convolutional Neural Networks for Age and Gender Classification, Stanford University. 2016
+ ```
  
 Both of these papers have established efficient architecture for solving gender and age classification problem. I've tried to extend their approach in order to improve the results. The primary area of experimentation is to tweak previously published architecture in terms of depth of the network, number of parameters in the network, modifications to parameters of the network or the layout of these networks. I've tried to chain the architectures for age and gender classification to take advantage of gender-specific age characteristics inherent to images.
 
