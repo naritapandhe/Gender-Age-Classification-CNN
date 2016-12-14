@@ -45,15 +45,14 @@ def train_and_test():
 
 	#List of cv folds
 	cv_fold_names = ['0','1','2','3']
-	pickle_file_path_prefix = '/media/narita/My Passport/Gender-Age Classification/subject_exclusive_distributed_data/male/'
-	#pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/cv/male/'
+	train_pickle_file_path_prefix = '/media/narita/My Passport/Gender-Age Classification/subject_exclusive_distributed_data/male/'
 	past_tacc = 0
 	past_tloss = 3.0
 
 
 	
 	test_fold_names = ['predicted_males_test']
-	pickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/final_test_data_based_on_predicted_genders/male/'
+	pickle_file_path_prefix = '/media/narita/My Passport/Gender-Age-Classification-All-Data/gender_based_data/final_test_data_based_on_predicted_genders/male/'
 	print('Trying to read test fold: %s......' % test_fold_names[0])
 	
 	test_file = load_test_file(pickle_file_path_prefix+test_fold_names[0])
@@ -85,8 +84,8 @@ def train_and_test():
 	for fold in cv_fold_names:
 
 		print('Trying to read training fold: %s......' % fold)
-		train_file = load_train_file(pickle_file_path_prefix+'male_cv_train_'+fold)
-		val_file = load_val_file(pickle_file_path_prefix+'male_cv_val_'+fold)
+		train_file = load_train_file(train_pickle_file_path_prefix+'male_cv_train_'+fold)
+		val_file = load_val_file(train_pickle_file_path_prefix+'male_cv_val_'+fold)
 		
 		train_images = []
 		train_ages = []
@@ -120,6 +119,7 @@ def train_and_test():
 		
 		X_train = train_images
 		y_train = train_ages
+		X_train, y_train = shuffle(X_train, y_train, random_state=42)
 
 
 		X_val = val_images
@@ -159,7 +159,6 @@ def train_and_test():
 		print ('Training, Validation done for fold: %s\n' % fold)
 		
 
-		age_group_ratios = [0.90,0.90,0.90,0.8,0.8,0.90,0.90,0.90]
 		image_size = 227
 		num_channels = 3
 		batch_size = 50
@@ -242,6 +241,7 @@ def train_and_test():
 		c3 = tf.nn.relu(conv2d(lrn2,w3,stride=[1,1,1,1],pad='SAME') + b3)
 		mxp3 = max_pool(c3,k=[1,3,3,1],stride=[1,2,2,1],pad='SAME')
 
+
 		#FC Layer 1
 		wfc1 = tf.Variable(weight_variable([7 * 7 * 384, 512]),name="wfc1")    
 		bfc1 = tf.Variable(bias_variable([512]),name="bfc1")
@@ -254,14 +254,14 @@ def train_and_test():
 		bfc2 = tf.Variable(bias_variable([512]),name="bfc2")
 		fc2 = tf.nn.relu(tf.matmul(dfc1, wfc2) + bfc2)
 		dfc2 = tf.nn.dropout(fc2, 0.7)
-
-
+		
+		
 		#FC Layer 3
 		wfc3 = tf.Variable(weight_variable([512, num_labels]),name="wfc3")  
 		bfc3 = tf.Variable(bias_variable([num_labels]),name="bfc3")
 		fc3 = (tf.matmul(dfc2, wfc3) + bfc3)
 		print fc3.get_shape
-
+		
 		weighted_logits = tf.mul(fc3, class_weight) # shape [batch_size, num_labels]
 
 		cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(weighted_logits,tfy))
@@ -273,7 +273,7 @@ def train_and_test():
 						  tf.nn.l2_loss(wfc1) + tf.nn.l2_loss(bfc1) +
 						  tf.nn.l2_loss(w2) + tf.nn.l2_loss(b2) +
 						  tf.nn.l2_loss(w1) + tf.nn.l2_loss(b1) +
-						  tf.nn.l2_loss(w3) + tf.nn.l2_loss(b3)
+						  tf.nn.l2_loss(w3) + tf.nn.l2_loss(b3) 
 						)
 		
 		# Add the regularization term to the loss.
@@ -283,10 +283,6 @@ def train_and_test():
 
 		learning_rate = tf.placeholder(tf.float32, shape=[])
 		
-		#train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
-		#train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
-		# Optimizer: set up a variable that's incremented once per batch and
-		# controls the learning rate decay.
 		batch = tf.Variable(0)
 
 		learning_rate = tf.train.exponential_decay(
@@ -298,7 +294,7 @@ def train_and_test():
 		
 		# Use simple momentum for the optimization.
 		train_step = tf.train.MomentumOptimizer(learning_rate,0.9).minimize(cross_entropy,global_step=batch)
-
+		
 		# Add an op to initialize the variables.
 		init_op = tf.initialize_all_variables()
 
@@ -308,7 +304,6 @@ def train_and_test():
 		sess.run(init_op)
 
 		num_steps = 50000
-
 		for i in range(num_steps):
 		
 			indices = np.random.permutation(X_train.shape[0])[:batch_size]
@@ -385,14 +380,13 @@ def train_and_test():
 				print("Iteration: %i. Test loss %.5f. Test Minibatch accuracy: %.5f" % (i, np.mean(test_losses),tacc))
 
 				# Save the variables to disk.
-			
 				if tacc > past_tacc:
 					past_tacc = tacc
-					save_path = saver.save(sess, "/media/narita/My Passport/Gender-Age Classification/subject_exclusive_distributed_data/male/model.ckpt")
+					save_path = saver.save(sess, "/media/narita/My Passport/Gender-Age Classification/subject_exclusive_distributed_data/male/saved_model3/model.ckpt")
 					print("Model saved in file: %s" % save_path)
 
 					pred = np.concatenate(preds)
-					np.savetxt('/media/narita/My Passport/Gender-Age Classification/subject_exclusive_distributed_data/male/predicted_males_age_prediction.txt',pred,fmt='%.0f') 
+					np.savetxt('/media/narita/My Passport/Gender-Age Classification/subject_exclusive_distributed_data/male/saved_model3/predicted_males_age_prediction2.txt',pred,fmt='%.0f') 
 	
 
 			

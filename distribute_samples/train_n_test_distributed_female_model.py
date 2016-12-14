@@ -46,7 +46,6 @@ def train_and_test():
 	#List of cv folds
 	cv_fold_names = ['0','1','2','3']
 	train_pickle_file_path_prefix = '/media/narita/My Passport/Gender-Age Classification/subject_exclusive_distributed_data/female/'
-	#pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/cv/male/'
 	past_tacc = 0
 	past_tloss = 3.0
 
@@ -174,27 +173,6 @@ def train_and_test():
 		sess = tf.InteractiveSession()
 
 
-		#layer initialization functions
-		def conv_ortho_weights(chan_in,filter_h,filter_w,chan_out):
-			bound = np.sqrt(6./(chan_in*filter_h*filter_w + chan_out*filter_h*filter_w))
-			W = np.random.random((chan_out, chan_in * filter_h * filter_w))
-			u, s, v = np.linalg.svd(W,full_matrices=False)
-			if u.shape[0] != u.shape[1]:
-				W = u.reshape((chan_in, filter_h, filter_w, chan_out))
-			else:
-				W = v.reshape((chan_in, filter_h, filter_w, chan_out))
-			return W.astype(np.float32)
-
-		def dense_ortho_weights(fan_in,fan_out):
-			bound = np.sqrt(2./(fan_in+fan_out))
-			W = np.random.randn(fan_in,fan_out)*bound
-			u, s, v = np.linalg.svd(W,full_matrices=False)
-			if u.shape[0] != u.shape[1]:
-				W = u
-			else:
-				W = v
-			return W.astype(np.float32)
-
 		def data_type():
 		  """Return the type of the activations, weights, and placeholder variables."""
 		  return tf.float32
@@ -243,22 +221,6 @@ def train_and_test():
 		c3 = tf.nn.relu(conv2d(lrn2,w3,stride=[1,1,1,1],pad='SAME') + b3)
 		mxp3 = max_pool(c3,k=[1,3,3,1],stride=[1,2,2,1],pad='SAME')
 
-		#Conv Layer 4
-		w4 = tf.Variable(weight_variable([3,3,384,512]),name="w4")    
-		b4 = tf.Variable(bias_variable([512]),name="b4")
-		c4 = tf.nn.relu(conv2d(mxp3,w4,stride=[1,1,1,1],pad='SAME') + b4)
-		mxp4 = max_pool(c4,k=[1,3,3,1],stride=[1,1,1,1],pad='SAME')
-		
-
-		#Conv Layer 5
-		w5 = tf.Variable(weight_variable([3,3,512,512]),name="w5")    
-		b5 = tf.Variable(bias_variable([512]),name="b5")
-		c5 = tf.nn.relu(conv2d(mxp4,w5,stride=[1,1,1,1],pad='SAME') + b5)
-		mxp5 = max_pool(c4,k=[1,3,3,1],stride=[1,1,1,1],pad='SAME')
-		df1 = tf.nn.dropout(mxp5, 0.5)
-
-
-		'''
 		#FC Layer 1
 		wfc1 = tf.Variable(weight_variable([7 * 7 * 384, 512]),name="wfc1")    
 		bfc1 = tf.Variable(bias_variable([512]),name="bfc1")
@@ -271,20 +233,11 @@ def train_and_test():
 		bfc2 = tf.Variable(bias_variable([512]),name="bfc2")
 		fc2 = tf.nn.relu(tf.matmul(dfc1, wfc2) + bfc2)
 		dfc2 = tf.nn.dropout(fc2, 0.7)
-		'''
-		#FC Layer 3
-		wfc1 = tf.Variable(weight_variable([7 * 7 * 512, 512]),name="wfc1")    
-		bfc1 = tf.Variable(bias_variable([512]),name="bfc1")
-		mxp1_flat = tf.reshape(df1, [-1, 7 * 7 * 512])
-		fc1 = (tf.matmul(mxp1_flat, wfc1) + bfc1)
-		df2 = tf.nn.dropout(fc1, 0.7)
-
-
-
+	
 		#FC Layer 3
 		wfc3 = tf.Variable(weight_variable([512, num_labels]),name="wfc3")  
 		bfc3 = tf.Variable(bias_variable([num_labels]),name="bfc3")
-		fc3 = (tf.matmul(df2, wfc3) + bfc3)
+		fc3 = (tf.matmul(dfc2, wfc3) + bfc3)
 		print fc3.get_shape
 
 		weighted_logits = tf.mul(fc3, class_weight) # shape [batch_size, num_labels]
@@ -294,14 +247,12 @@ def train_and_test():
 		
 		# L2 regularization for the fully connected parameters.
 		regularizers = (  tf.nn.l2_loss(wfc3) + tf.nn.l2_loss(bfc3) +
-						  #tf.nn.l2_loss(wfc2) + tf.nn.l2_loss(bfc2) +
+						  tf.nn.l2_loss(wfc2) + tf.nn.l2_loss(bfc2) +
 						  tf.nn.l2_loss(wfc1) + tf.nn.l2_loss(bfc1) +
 						  tf.nn.l2_loss(w2) + tf.nn.l2_loss(b2) +
 						  tf.nn.l2_loss(w1) + tf.nn.l2_loss(b1) +
 						  tf.nn.l2_loss(w3) + tf.nn.l2_loss(b3) +
-						  tf.nn.l2_loss(w4) + tf.nn.l2_loss(b4) +
-						  tf.nn.l2_loss(w5) + tf.nn.l2_loss(b5)
-
+					
 						)
 		
 		# Add the regularization term to the loss.
@@ -311,10 +262,6 @@ def train_and_test():
 
 		learning_rate = tf.placeholder(tf.float32, shape=[])
 		
-		#train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
-		#train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
-		# Optimizer: set up a variable that's incremented once per batch and
-		# controls the learning rate decay.
 		batch = tf.Variable(0)
 
 		learning_rate = tf.train.exponential_decay(
@@ -325,7 +272,7 @@ def train_and_test():
 		  staircase=True)
 		
 		# Use simple momentum for the optimization.
-		train_step = tf.train.AdamOptimizer(learning_rate,0.9).minimize(cross_entropy,global_step=batch)
+		train_step = tf.train.MomentumOptimizer(learning_rate,0.9).minimize(cross_entropy,global_step=batch)
 
 		# Add an op to initialize the variables.
 		init_op = tf.initialize_all_variables()
@@ -413,7 +360,6 @@ def train_and_test():
 				print("Iteration: %i. Test loss %.5f. Test Minibatch accuracy: %.5f" % (i, np.mean(test_losses),tacc))
 
 				# Save the variables to disk.
-			
 				if tacc > past_tacc:
 					past_tacc = tacc
 					save_path = saver.save(sess, "/media/narita/My Passport/Gender-Age Classification/subject_exclusive_distributed_data/female/saved_model3/model.ckpt")
