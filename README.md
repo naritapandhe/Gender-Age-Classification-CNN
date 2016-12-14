@@ -35,6 +35,7 @@ For Gender Classification, following are the details of the model:
 6. Last layer maps to the 2 classes for gender
   
 Since, gender and age classification has been chained i.e. based on gender, classify age, 2 separate age classifiers: Male-Age and Female-Age classifiers have been built. Based on the results of gender classification, the images are fed to the respective gender-based age classifiers.  
+
 For gender-based Age Classification, same model(Gender Classification model) has been used with the following modifications:
 
 1. Dropouts in the second fully connected layer have been modified to be 0.7
@@ -43,9 +44,29 @@ For gender-based Age Classification, same model(Gender Classification model) has
 
 For both Age and Gender classification, training is performed using Stochastic Gradient Descent having a batch size of 50. The initial learning rate is 1e−3, reduced to 5e-4 after every 10,000 iterations. The models have been trained using 4-fold cross validation.
 
+##########################################################
+## Model Description
 
+Ensure the following Python packages are installed on your instance:
 
- 
+* numpy
+* tensorflow (For instructions on how to setup TensorFlow on AWS, see TensorFlow on AWS Instructions)
+* sklearn
+* scipy 
+* pandas
+* matplotlib
+
+Once your environment has been setup, download the project files and run the following:
+
+1. For gender classification: python gender/train_n_test_gender.py
+ The script expects: Path to training and testing data.
+ Cross validation accuracy is recorded every 1000 iterations. Predictions are saved every 1000 iterations to predicted_genders.txt
+
+2. Based on the gender prediction results, to separate out the data of predicted males and females, execute the script: gender/create_gender_test_based_on_predictions.py
+
+3. Once we have separated out the predicted males and females, we can then feed them gender-based age classifiers to get the age. Inorder to do so, execute the script: 
+  1. python age/train_n_test_male_model.py #Execute this for predicted males
+  2. python age/train_n_test_female_model.py #Execute this for predicted females
 
 
 
