@@ -65,62 +65,12 @@ def train_and_test():
 		X_test = test_images
 		y_test = test_ages
 
-		'''
+		print ("TAdadad")
+		print X_test.shape
 
-		for fold in cv_fold_names:
-			print ("Test data done for fold: %s" % test_fold_names[0])
-			print X_test.shape
-			print y_test.shape
-			print(' ')
+	
 
-			print('Trying to read training fold: %s......' % fold)
-			train_file = load_train_file(train_pickle_file_path_prefix+'gender_neutral_cv_train_'+fold)
-			val_file = load_val_file(train_pickle_file_path_prefix+'gender_neutral_cv_val_'+fold)
-			
-			train_images = []
-			train_ages = []
-
-			val_images = []
-			val_ages = []
-
-
-			Load all the training images for CV fold. Implies: One CV fold has 3-sub folds.
-			So, it'll load images from all the 3-sub folds
-			for i in range(len(train_file)):
-				current_file = train_file[i]
-				imgs = np.array(current_file['images'])
-				ages = np.array(current_file['ages'])
-				one_hot1 = one_hot(ages)
-				train_images.append(imgs)
-				train_ages.append(one_hot1)
-
-
-			val_images = np.array(val_file['images'])
-			val_ages = np.array(val_file['ages'])
-			val_ages = one_hot(val_ages)
-
-			train_images = np.array(train_images)
-			train_images = np.vstack(train_images)
-			
-			train_ages = np.array(train_ages)
-			train_ages = np.vstack(train_ages)
-			
-			print ("Train+Val Details for fold: %s" % fold)
-			X_train = train_images
-			y_train = train_ages
-			print X_train.shape
-			print y_train.shape
-
-			X_val = val_images
-			y_val = val_ages
-			print val_images.shape
-			print val_ages.shape
-			print(' ')
-		'''
-		
-		
-
-		print ('Training, Validation done for fold: %s\n' % fold)
+		#print ('Training, Validation done for fold: %s\n' % fold)
 		image_size = 227
 		num_channels = 3
 		batch_size = 50
@@ -240,68 +190,16 @@ def train_and_test():
 
 		sess.run(init_op)
 
-		num_steps = 25000
-		for i in range(num_steps):
-			'''
-			indices = np.random.permutation(X_train.shape[0])[:batch_size]
-			X_batch = X_train[indices,:,:,:]
-			y_batch = y_train[indices,:]
+		num_steps = 100
+		pathhh = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/final_data/saved_model/' 
 
-			rowseed = random.randint(0,29)
-			colseed = random.randint(0,29)
-			X_batch = X_batch[:,rowseed:rowseed+227,colseed:colseed+227,:]
-			
-			#random ud flipping
-			if random.random() < .5:
-				X_batch = X_batch[:,::-1,:,:]
-						
-			#random lr flipping
-			if random.random() < .5:
-				X_batch = X_batch[:,:,::-1,:]
-						
-			feed_dict = {tfx : X_batch, tfy : y_batch}      
-			
-			_, l, predictions = sess.run([train_step, cross_entropy, prediction], feed_dict=feed_dict)
-
-			if (i % 100 == 0):
-				print("Iteration: %i. Train loss %.5f, Minibatch accuracy: %.1f%%" % (i,l,accuracy(predictions,y_batch)))
-
-			
-			
-			#validation accuracy
-			if (i % 1000 == 0):
-				val_accuracies = []
-				val_losses = []
-
-				for j in range(0,X_val.shape[0],batch_size):
-					X_batch = X_val[j:j+batch_size,:,:,:]
-					y_batch = y_val[j:j+batch_size,:]
-
-					#Center Crop
-					left = (width - new_width)/2
-					top = (height - new_height)/2
-					right = (width + new_width)/2
-					bottom = (height + new_height)/2
-					X_batch = X_batch[:,left:right,top:bottom,:]
-					
-					feed_dict = {tfx : X_batch, tfy : y_batch}   
-					l, predictions = sess.run([cross_entropy,prediction], feed_dict=feed_dict)   
-					val_accuracies.append(accuracy(predictions,y_batch))
-					val_losses.append(l)
-
-				#acc = np.mean(val_accuracies)    
-				#mean_loss = np.mean(val_losses)    
-				print("Iteration: %i. Val loss %.5f Validation Minibatch accuracy: %.1f%%" % (i, np.mean(val_losses), np.mean(val_accuracies)))
-				# Save the variables to disk.
-			'''
-			print "Restoring the model and predicting....."
-			ckpt = tf.train.get_checkpoint_state("/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/old_but_successful_exps/male/best_observations/saved_model/")
-	if ckpt and ckpt.model_checkpoint_path:
-	    # Restores from checkpoint
-	    saver.restore(sess, "/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/old_but_successful_exps/male/best_observations/saved_model/model.ckpt")
-	    print "Model loaded"
-	
-				if (i % 1000 == 0):
+		ckpt = tf.train.get_checkpoint_state(pathhh)
+		if ckpt and ckpt.model_checkpoint_path:
+			# Restores from checkpoint
+			saver.restore(sess, pathhh+"model.ckpt")
+			print "Model loaded"
+			for i in range(num_steps):
+				if (i % 10 == 0):
 					test_accuracies = []
 					test_losses = []
 					preds = []
@@ -322,25 +220,12 @@ def train_and_test():
 						test_losses.append(l)
 						preds.append(np.argmax(predictions, 1))
 
-					tacc = np.mean(test_accuracies)    
-					print("Iteration: %i. Test loss %.5f. Test Minibatch accuracy: %.5f" % (i, np.mean(test_losses),tacc))
-					with open("./test_accuracy_log.txt", "a") as f:
-						f.write("Iteration: %i. Test loss %.5f. Test Minibatch accuracy: %.5f" % (i, np.mean(test_losses),tacc))
-					
-					if tacc > past_tacc:
-						past_tacc = tacc
-						save_path = saver.save(sess, "/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/final_data/female/saved_model/model.ckpt")
-						print("Model saved in file: %s" % save_path)
 
-						pred = np.concatenate(preds)
-						np.savetxt('/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/final_data/gender_neutral_age_prediction_for_predicted_males.txt',pred,fmt='%.0f') 
-
-						with open("/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/final_data/gender_neutral_age_prediction_accuracy_for_predicted_males.txt", "a") as f:
-							f.write('iteration %i test accuracy: %.4f%%\n' % (i, tacc))
-							
-
-			
-	
+					pred = np.concatenate(preds)
+					np.savetxt('/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/final_data/gender_neutral_age_prediction_for_predicted_females.txt',pred,fmt='%.0f') 
+					print('Predictions saved...')
+		else:
+			print("Model not found")
 					
 
 

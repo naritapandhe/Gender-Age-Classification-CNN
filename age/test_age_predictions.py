@@ -79,6 +79,8 @@ def train_and_test():
 	print y_test.shape
 	print(' ')
 
+	age_group_ratios = [0.90,0.90,0.90,0.90,0.80,0.90,0.90,0.90]
+
 	
 
 	image_size = 227
@@ -238,7 +240,7 @@ def train_and_test():
 	    print "Model loaded"
 	    for i in range(num_steps):
 	            #run model on test
-	            if (i % 10 == 0):
+	            if (i % 1000 == 0):
 	                print i
 	                preds = []
 	                for j in range(0,X_test.shape[0],batch_size):

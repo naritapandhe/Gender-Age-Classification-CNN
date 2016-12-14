@@ -80,13 +80,20 @@ def load_predictions(file_name):
 	return output   
 
 def main():
-	predicted_file_path = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_neutral_data/final_data/gender_neutral_age_prediction_for_predicted_males.txt' 
+	predicted_file_path = ''
+
+	predicted_file_path = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/final_test_data_based_on_predicted_genders/male/predicted_male_age_predictions_4000.txt'
+	#'/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/age_predictions_based_on_gender_male.txt'
+	#test_file_contents = load_gt_file(gtfile_path,gtfile_name)
 	predictions = load_predictions(predicted_file_path)
+	#predictions[predictions == 0] = 'm'
+	#predictions[predictions == 1] = 'f'
 	predictions = np.array(predictions)
 
 
 	test_fold_names = ['predicted_males_test']
 	pickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/final_test_data_based_on_predicted_genders/male/'
+	#pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_neutral_data/'
 
 
 	for fold in test_fold_names:
@@ -97,21 +104,45 @@ def main():
 		gt_genders = []
 		pt_genders = []
 
+		'''
+		Load all the ground truth ages
+		'''
+
+		'''
+		for i in range(len(gt_file)):
+			current_file = gt_file[i]
+			ages = np.array(current_file['ages'])
+			genders = np.array(current_file['genders'])
+			one_hot1 = one_hot(ages)
+			gt_ages.append(one_hot1)
+			gt_genders.append(genders)
+		'''	
 
 		ages = np.array(gt_file['gt_ages'])
 		genders = np.array(gt_file['gt_genders'])
+		pt_genders = np.array(gt_file['pt_genders'])
 		
 		gt_ages = ages
 		gt_genders = genders
-		pt_genders = np.array(gt_file['pt_genders'])
 
+		'''
+		#one_hot1 = one_hot(ages,'gender')
+		gt_genders.append(genders)
+
+		gt_ages = np.array(gt_ages[0])
+		gt_ages = np.vstack(gt_ages)
+
+		gt_genders = np.array(gt_genders[0])
+		gt_genders = np.vstack(gt_genders)
+		'''
 
 		print ("GT loaded for fold: %s" % fold)
 		print gt_ages.shape
 		print gt_genders.shape
-		print pt_genders.shape
 		print predictions.shape
 	
+	print("gt_genders:")
+	print collections.Counter(pt_genders)
 	y_true = []
 	y_pred = []
 
@@ -126,9 +157,11 @@ def main():
 	male_exact_match = 0
 	male_one_off_count = 0
 
+	
 	female_count = 0
 	female_exact_match = 0
 	female_one_off_count = 0
+	
 
 	one_off_count = 0
 	exact_match = 0
@@ -149,6 +182,7 @@ def main():
 			if  (abs(y_true[i] - y_pred[i])<=1):
 				male_one_off_count+=1	
 
+		
 		else:
 			#Female
 			female_count += 1
@@ -157,6 +191,7 @@ def main():
 				
 			if  (abs(y_true[i] - y_pred[i])<=1):
 				female_one_off_count+=1
+				
 					
 
 			

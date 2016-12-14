@@ -4,6 +4,7 @@ import sys
 import pickle
 import random
 from sklearn.utils import shuffle
+from collections import Counter
 
 train_mode = 'age'
 
@@ -28,21 +29,21 @@ def load_test_file(name):
 	with open(name + '.pkl', 'rb') as f:
 		return pickle.load(f)
 
-
+def one_hot_to_number(y):
+	indices = np.where(y == 1)
+	return indices[1]
 
 def train_and_test():
 
 	#List of cv folds
 	cv_fold_names = ['0','1','2','3']
-	#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
-	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/cv/female/'
+	trainpickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/female/'
 	past_tacc = 0
 	past_tloss = 3.0
 
 
-	test_fold_names = ['female_test']
-	#pickle_file_path_prefix = '/Volumes/Mac-B/faces-recognition/gender_neutral_data/'
-	pickle_file_path_prefix = '/home/ubuntu/gender_age/gender_based_train_and_testing/gender_based_data/cv/female/'
+	test_fold_names = ['predicted_females_test']
+	pickle_file_path_prefix = '/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/final_test_data_based_on_predicted_genders/female/'
 	print('Trying to read test fold: %s......' % test_fold_names[0])
 	
 	test_file = load_test_file(pickle_file_path_prefix+test_fold_names[0])
@@ -67,14 +68,15 @@ def train_and_test():
 
 	
 	for fold in cv_fold_names:
+		age_group_ratios = np.zeros(8)
 		print ("Test data done for fold: %s" % test_fold_names[0])
 		print X_test.shape
 		print y_test.shape
 		print(' ')
 
 		print('Trying to read training fold: %s......' % fold)
-		train_file = load_train_file(pickle_file_path_prefix+'female_cv_train_'+fold)
-		val_file = load_val_file(pickle_file_path_prefix+'female_cv_val_'+fold)
+		train_file = load_train_file(trainpickle_file_path_prefix+'female_cv_train_'+fold)
+		val_file = load_val_file(trainpickle_file_path_prefix+'female_cv_val_'+fold)
 		
 		train_images = []
 		train_ages = []
@@ -123,6 +125,18 @@ def train_and_test():
 
 		print ('Training, Validation done for fold: %s\n' % fold)
 
+		#Find the weighted age_group_ratios
+		age_group_counters = Counter(one_hot_to_number(y_train))
+		age_group_counters_dict = dict(age_group_counters)
+		print age_group_counters_dict
+		sum_age_groups = sum(age_group_counters_dict.values())
+
+		for i in range(len(age_group_counters_dict)):
+			age_group_ratios[i] = (1 - (float(age_group_counters_dict[i])/sum_age_groups))
+
+		print('Age group ratios: ')
+		print age_group_ratios	
+
 		image_size = 227
 		num_channels = 3
 		batch_size = 50
@@ -144,7 +158,7 @@ def train_and_test():
 			return initial
 
 		def bias_variable(shape):
-			initial = tf.constant(0.1, shape=shape)
+			initial = tf.constant(0.0, shape=shape)
 			return initial
 
 		def conv2d(x, W, stride=[1,1,1,1], pad='SAME'):
@@ -160,6 +174,8 @@ def train_and_test():
 
 		tfx = tf.placeholder(tf.float32, shape=[None,image_size,image_size,num_channels])
 		tfy = tf.placeholder(tf.float32, shape=[None,num_labels])
+
+		class_weight = tf.constant(age_group_ratios,dtype=tf.float32)
 
 		#Conv Layer 1
 		w1 = tf.Variable(weight_variable([7,7,3,96]),name="w1")    
@@ -199,17 +215,22 @@ def train_and_test():
 		wfc3 = tf.Variable(weight_variable([512, num_labels]),name="wfc3")  
 		bfc3 = tf.Variable(bias_variable([num_labels]),name="bfc3")
 		fc3 = (tf.matmul(dfc2, wfc3) + bfc3)
+		print fc3.get_shape
 
-		cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(fc3,tfy))
+		weighted_logits = tf.mul(fc3, class_weight) # shape [batch_size, num_labels]
 
-		 # L2 regularization for the fully connected parameters.
+		cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(weighted_logits,tfy))
+
+		
+		# L2 regularization for the fully connected parameters.
 		regularizers = (  tf.nn.l2_loss(wfc3) + tf.nn.l2_loss(bfc3) +
 						  tf.nn.l2_loss(wfc2) + tf.nn.l2_loss(bfc2) +
 						  tf.nn.l2_loss(wfc1) + tf.nn.l2_loss(bfc1) +
 						  tf.nn.l2_loss(w2) + tf.nn.l2_loss(b2) +
-						  tf.nn.l2_loss(w1) + tf.nn.l2_loss(b1) 
+						  tf.nn.l2_loss(w1) + tf.nn.l2_loss(b1) +
+						  tf.nn.l2_loss(w3) + tf.nn.l2_loss(b3)
 						)
-
+		
 		# Add the regularization term to the loss.
 		cross_entropy += 5e-4 * regularizers
 
@@ -217,7 +238,21 @@ def train_and_test():
 
 		learning_rate = tf.placeholder(tf.float32, shape=[])
 		
-		train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
+		#train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
+		#train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
+		# Optimizer: set up a variable that's incremented once per batch and
+		# controls the learning rate decay.
+		batch = tf.Variable(0)
+
+		learning_rate = tf.train.exponential_decay(
+		  1e-3,                # Base learning rate.
+		  batch * batch_size,  # Current index into the dataset.
+		  10000,          		# Decay step.
+		  0.0005,                # Decay rate.
+		  staircase=True)
+		
+		# Use simple momentum for the optimization.
+		train_step = tf.train.MomentumOptimizer(learning_rate,0.9).minimize(cross_entropy,global_step=batch)
 
 		# Add an op to initialize the variables.
 		init_op = tf.initialize_all_variables()
@@ -227,7 +262,7 @@ def train_and_test():
 
 		sess.run(init_op)
 
-		num_steps = 25000
+		num_steps = 50000
 		for i in range(num_steps):
 			indices = np.random.permutation(X_train.shape[0])[:batch_size]
 			X_batch = X_train[indices,:,:,:]
@@ -315,11 +350,11 @@ def train_and_test():
 			
 				if tacc > past_tacc:
 					past_tacc = tacc
-					save_path = saver.save(sess, "/home/ubuntu/gender_age/gender_based_train_and_testing/female_based_model/saved_model/model.ckpt")
+					save_path = saver.save(sess, "/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/final_test_data_based_on_predicted_genders/female/saved_model/model.ckpt")
 					print("Model saved in file: %s" % save_path)
 
 					pred = np.concatenate(preds)
-					np.savetxt('/home/ubuntu/gender_age/gender_based_train_and_testing/female_based_model/female_age_prediction.txt',pred,fmt='%.0f') 
+					np.savetxt('/home/narita/Documents/pythonworkspace/data-science-practicum/gender-age-classification/gender_based_data/final_test_data_based_on_predicted_genders/female/predicted_females_age_prediction.txt',pred,fmt='%.0f') 
 
 def main():
 	train_and_test()
