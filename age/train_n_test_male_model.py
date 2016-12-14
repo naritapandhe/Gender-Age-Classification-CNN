@@ -382,11 +382,11 @@ def train_and_test():
 				# Save the variables to disk.
 				if tacc > past_tacc:
 					past_tacc = tacc
-					save_path = saver.save(sess, "/media/narita/My Passport/Gender-Age Classification/subject_exclusive_distributed_data/male/saved_model3/model.ckpt")
+					save_path = saver.save(sess, "/media/narita/My Passport/Gender-Age Classification/subject_exclusive_distributed_data/male/saved_model/model.ckpt")
 					print("Model saved in file: %s" % save_path)
 
 					pred = np.concatenate(preds)
-					np.savetxt('/media/narita/My Passport/Gender-Age Classification/subject_exclusive_distributed_data/male/saved_model3/predicted_males_age_prediction2.txt',pred,fmt='%.0f') 
+					np.savetxt('/media/narita/My Passport/Gender-Age Classification/subject_exclusive_distributed_data/male/saved_model/predicted_males_age_prediction.txt',pred,fmt='%.0f') 
 	
 
 			
