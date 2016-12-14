@@ -15,7 +15,6 @@ The dataset used for training and testing for this project is the [Adience Bench
 
 ##########################################################
 ## Preprocessing
----
 The following preprocessing was applied to each image:
 
 - Have trained the network on frontal faces images
@@ -26,12 +25,26 @@ The following preprocessing was applied to each image:
 
 ##########################################################
 ## Model Description
----
 For Gender Classification, following are the details of the model: 
-1. 96 filters of size 3x7x7 pixels are applied to the input with a stride of 4 and 0 padding. This is followed by a rectified linear operator (ReLU), a Max-Pooling layer taking the maximal value of 3x3 regions with two-pixel strides and a local response normalization layer.
-2. Second convolutional layer then processes the 96x28x28 output of the previous layer with 256 filters of size 96x5x5. Followed by ReLU, Max-Pooling layer and LRN
-3. In the third layer, 384 filters of size 256x3x3 are convolved with stride 1 and padding 1, followed by a ReLU and Max-Pool. 
-4. The fully connected layers:
+
+1. 3x7x7 filter shape, 96 feature maps. Stride of 4 and 0 padding. Followed by: ReLU, Max-Pool, LRN
+2. 96x28x28 filter shape, 256 feature maps. Followed by: ReLU, Max-Pool, LRN
+3. 256x3x3 filter shape, stride 1 and padding 1. ReLU, Max-Pool. 
+4. Fully connected layer of 512 neurons. Followed by : ReLU, Dropout = 0.5. 
+5. Fully connected layer of 512 neurons. Followed by : ReLU, Dropout = 0.5. 
+6. Last layer maps to the 2 classes for gender
+  
+Since, gender and age classification has been chained i.e. based on gender, classify age, 2 separate age classifiers: Male-Age and Female-Age classifiers have been built. Based on the results of gender classification, the images are fed to the respective gender-based age classifiers.  
+For gender-based Age Classification, same model(Gender Classification model) has been used with the following modifications:
+
+1. Dropouts in the second fully connected layer have been modified to be 0.7
+2. Addition of weighted losses
+3. Last layer maps to the 8 classes for gender
+
+For both Age and Gender classification, training is performed using Stochastic Gradient Descent having a batch size of 50. The initial learning rate is 1e−3, reduced to 5e-4 after every 10,000 iterations. The models have been trained using 4-fold cross validation.
+
+
+
  
 
 
