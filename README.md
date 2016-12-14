@@ -1,8 +1,8 @@
 ##########################################################
 # Gender and Age Classification using CNNs
 ##########################################################
-### Overview
-##########################################################
+## Overview
+---
 This is my final course projects for CSCI 8360 Data Science Practicum course. This project focuses on gender and age classification based on images. My work builds on the previous work:
 
  -*Gil Levi & Tal Hassner Alexander, Age and Gender Classification using Convolutional Neural Networks. 2015*
@@ -15,8 +15,8 @@ The dataset used for training and testing for this project is the [Adience Bench
 ![sample](https://cloud.githubusercontent.com/assets/3252684/21166797/c6599684-c175-11e6-9714-8125febf14dc.png)
 
 ##########################################################
-### Preprocessing
-##########################################################
+## Preprocessing
+---
 The following preprocessing was applied to each image:
 
 - Have trained the network on frontal faces images
@@ -26,8 +26,8 @@ The following preprocessing was applied to each image:
 
 
 ##########################################################
-### Model Description
-##########################################################
+## Model Description
+---
 For Gender Classification, following are the details of the model: 
 1. 96 filters of size 3x7x7 pixels are applied to the input with a stride of 4 and 0 padding. This is followed by a rectified linear operator (ReLU), a Max-Pooling layer taking the maximal value of 3x3 regions with two-pixel strides and a local response normalization layer.
 2. Second convolutional layer then processes the 96x28x28 output of the previous layer with 256 filters of size 96x5x5. Followed by ReLU, Max-Pooling layer and LRN
