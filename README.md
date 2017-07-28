@@ -42,7 +42,7 @@ For gender-based **Age Classification**, same model(Gender Classification model)
 
 1. Dropouts in the second fully connected layer have been modified to be 0.7
 2. Addition of weighted losses
-3. Last layer maps to the 8 classes for gender
+3. Last layer maps to the 8 classes
 
 For both Age and Gender classification, training is performed using Stochastic Gradient Descent having a batch size of 50. The initial learning rate is 1e−3, reduced to 5e-4 after every 10,000 iterations. The models have been trained using 4-fold cross validation.
 
