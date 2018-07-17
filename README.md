@@ -74,7 +74,7 @@ Once your environment has been setup, download the project files and run the fol
 
 ##########################################################
 ## Results
-All the results have been logged here: https://github.com/eds-uga/gender-age-classification/issues/3
+All the results have been logged here: https://github.com/naritapandhe/Gender-Age-Classification-CNN/issues/3
 
 
  
